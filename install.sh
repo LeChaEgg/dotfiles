@@ -40,6 +40,8 @@ install_homebrew_packages() {
     resvg
     imagemagick
     eza
+    nvim
+    starship
   )
 
   # 定义需要安装的字体/应用列表 (Casks)
