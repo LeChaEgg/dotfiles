@@ -66,11 +66,11 @@ alias lp='lazygit -p'
 
 # open dotfiles in vim
 alias vv="nvim ~/.config/nvim"
-alias va="nvim ~/zsh/aliases"
+alias va="nvim ~/.config/zsh/aliases"
 alias vb="nvim ~/.bashrc"
 alias vs="nvim ~/.ssh/config"
 alias vt="nvim ~/.tmux.conf"
-alias sb='source ~/.bashrc'
+alias sz='source ~/.zshrc'
 
 # freqtrade
-alias freqtrade='docker compose run --rm freqtrade'
+#alias freqtrade='docker compose run --rm freqtrade'
