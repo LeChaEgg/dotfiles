@@ -4,6 +4,7 @@
 export EDITOR="nvim"
 export PATH="$PATH:$HOME/.local/bin"
 export W3M_DIR="$HOME/.cache/w3m"
+export PYTHONWARNINGS="ignore:The parameter -j is used more than once:UserWarning:click.core:"
 [ -f "$HOME/.config/zsh/aliases" ] && source "$HOME/.config/zsh/aliases"
 [ -f "$HOME/.config/zsh/fzf.zsh" ] && source "$HOME/.config/zsh/fzf.zsh" 
 # 加载隐私环境变量 (仅在交互式模式下)

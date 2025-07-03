@@ -42,6 +42,7 @@ install_homebrew_packages() {
     eza
     nvim
     starship
+    rich-cli
   )
 
   # 定义需要安装的字体/应用列表 (Casks)
