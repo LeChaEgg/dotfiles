@@ -70,7 +70,10 @@ alias va="nvim ~/.config/zsh/aliases"
 alias vb="nvim ~/.bashrc"
 alias vs="nvim ~/.ssh/config"
 alias vt="nvim ~/.tmux.conf"
+
+# source files 
 alias sz='source ~/.zshrc'
+alias sf='source ./.venv/bin/activate'
 
 # freqtrade
 #alias freqtrade='docker compose run --rm freqtrade'
