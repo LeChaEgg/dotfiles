@@ -1,0 +1,66 @@
+# A TOML linter such as https://taplo.tamasfe.dev/ can use this schema to validate your config.
+# If you encounter any issues, please make an issue at https://github.com/yazi-rs/schemas.
+"$schema" = "https://yazi-rs.github.io/schemas/yazi.json"
+
+[mgr]
+ratio          = [ 1, 4, 5 ]
+sort_by        = "mtime"
+sort_reverse 	= true
+sort_dir_first = true
+linemode       = "size"
+show_hidden    = true
+show_symlink   = true
+scrolloff      = 5
+mouse_events   = [ "click", "scroll", "drag" ]
+title_format   = "Yazi: {cwd}"
+
+[preview]
+wrap            = "yes"
+tab_size        = 2
+
+[opener]
+edit = [
+	{ run = '${EDITOR:-nvim} "$@"', desc = "$EDITOR", block = true, for = "unix" },
+]
+open = [
+	{ run = 'open "$@"',                    desc = "Open", for = "macos" },
+]
+reveal = [
+	{ run = 'open -R "$1"',                         desc = "Reveal", for = "macos" },
+	{ run = '''clear; exiftool "$1"; echo "Press enter to exit"; read _''', block = true, desc = "Show EXIF", for = "unix" },
+]
+play = [
+	{ run = 'mpv --force-window "$@"', orphan = true, for = "unix" },
+	{ run = 'mpv --force-window %*', orphan = true, for = "windows" },
+	{ run = '''mediainfo "$1"; echo "Press enter to exit"; read _''', block = true, desc = "Show media info", for = "unix" },
+]
+
+[[plugin.prepend_previewers]]
+name = "*/"
+run = "eza-preview"
+
+[[plugin.prepend_fetchers]]
+id   = "git"
+name = "*"
+run  = "git"
+
+[[plugin.prepend_fetchers]]
+id   = "git"
+name = "*/"
+run  = "git"
+
+[[plugin.prepend_previewers]]
+name = "*.md"
+run  = 'piper -- rich -j --left --panel=rounded --guides --line-numbers --force-terminal "$1"'
+[[plugin.prepend_previewers]]
+name = "*.py"
+run  = 'piper -- rich -j --left --panel=rounded --guides --line-numbers --force-terminal "$1"'
+[[plugin.prepend_previewers]]
+name = "*.json"
+run  = 'piper -- rich -j --left --panel=rounded --guides --line-numbers --force-terminal "$1"'
+[[plugin.prepend_previewers]]
+name = "*.ipynb"
+run  = 'piper -- rich -j --left --panel=rounded --guides --line-numbers --force-terminal "$1"'
+[[plugin.prepend_previewers]]
+name = "*.csv"
+run  = 'piper -- rich -j --left --panel=rounded --guides --line-numbers --force-terminal "$1"'

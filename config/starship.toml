@@ -1,0 +1,6 @@
+[hostname]
+ssh_only = true
+disabled = false
+[username]
+disabled = false
+show_always = true

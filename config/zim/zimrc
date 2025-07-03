@@ -1,0 +1,37 @@
+# ----------------------------------------------------------------
+# .zimrc - 修正后的推荐配置
+# ----------------------------------------------------------------
+
+# 1. 基础模块
+zmodule environment
+zmodule input
+zmodule termtitle
+zmodule utility
+zmodule git
+zmodule git-info
+zmodule duration-info
+zmodule kiesman99/zim-zoxide # enhanced cd
+zmodule joke/zim-starship #https://github.com/starship/starship
+zmodule homebrew #https://github.com/zimfw/homebrew
+
+# 2. 补全系统 (Completion System)
+#    顺序: 定义(definitions) -> 引擎(engine) -> 初始化(initializer)
+zmodule zsh-users/zsh-completions --fpath src
+zmodule Aloxaf/fzf-tab  # fzf-tab 会接管补全UI，需在 completion 模块前
+zmodule completion
+
+# 3. 交互式功能与 Widgets (Interactive Features & Widgets)
+#    顺序: 必须在使用它们的功能 (如高亮) 之前加载
+zmodule zsh-users/zsh-autosuggestions
+zmodule zsh-users/zsh-history-substring-search  # <-- **修正点**: 移到了高亮插件之前
+
+# 4. 语法高亮 (Syntax Highlighting)
+#    官方推荐，让它在最后加载，因为它需要识别前面所有的功能
+#zmodule zdharma-continuum/fast-syntax-highlighting  # 你可以继续使用这个
+# 备选方案 (如果问题依旧):
+zmodule zsh-users/zsh-syntax-highlighting
+
+# 5. 提示符 (Prompt)
+#    提示符模块永远放在最后
+zmodule prompt-pwd
+#zmodule asciiship

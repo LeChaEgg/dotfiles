@@ -1,0 +1,33 @@
+theme = Apple System Colors
+title = ""
+window-subtitle = false
+macos-titlebar-style = tabs 
+#transparent / hidden / tabs
+macos-titlebar-proxy-icon = hidden
+
+cursor-style-blink = true
+mouse-hide-while-typing = true
+focus-follows-mouse = true
+
+font-family = JetBrainsMono Nerd Font 
+font-size = 15 
+font-style = bold
+font-feature = +calt
+font-feature = +liga
+font-feature = +dlig
+font-feature = +rlig
+bold-is-bright = true
+
+quick-terminal-position = bottom
+keybind = global:opt+t=toggle_quick_terminal
+keybind = "cmd+.=text:\x03"
+keybind = "cmd+f=write_scrollback_file:open"
+
+auto-update = check
+auto-update-channel = stable 
+#stable / tip
+
+
+# This is the configuration file for Ghostty.
+#/Users/hxie/Library/Application Support/com.mitchellh.ghostty/config
+#~/.config/ghostty/config

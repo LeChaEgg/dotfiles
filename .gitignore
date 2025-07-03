@@ -1,0 +1,12 @@
+# macOS 
+.DS_Store
+
+#local folders
+/karabiner/automatic_backups/
+/zed/conversations/
+/zed/prompts/
+/zed/themes/
+
+# 编辑器备份文件 (例如 vim)
+*.swp
+*~
