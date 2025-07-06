@@ -69,7 +69,7 @@ alias vv="nvim ~/.config/nvim"
 alias va="nvim ~/.config/zsh/aliases"
 alias vb="nvim ~/.bashrc"
 alias vs="nvim ~/.ssh/config"
-alias vt="nvim ~/.tmux.conf"
+alias vt="nvim ~/.config/tmux/tmux.conf"
 
 # source files 
 alias sz='source ~/.zshrc'

@@ -43,6 +43,7 @@ install_homebrew_packages() {
     nvim
     starship
     rich-cli
+    virtualenv
   )
 
   # 定义需要安装的字体/应用列表 (Casks)
