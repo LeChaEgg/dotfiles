@@ -76,4 +76,4 @@ alias sz='source ~/.zshrc'
 alias sf='source ./.venv/bin/activate'
 
 # freqtrade
-#alias freqtrade='docker compose run --rm freqtrade'
+alias freqtrade='docker compose run --rm freqtrade'
