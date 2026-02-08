@@ -69,3 +69,7 @@ if [[ ! "$PATH" == */opt/homebrew/opt/fzf/bin* ]]; then
 fi
 source <(fzf --zsh)
 # -----------------------------------------end#####
+export PATH="/Library/TeX/texbin:$PATH"
+
+# Added by Antigravity
+export PATH="/Users/hxie/.antigravity/antigravity/bin:$PATH"
