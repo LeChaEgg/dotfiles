@@ -3,6 +3,9 @@
 
 #local folders
 /config/karabiner/automatic_backups/
+/config/gh/hosts.yml
+/config/iterm2/AppSupport
+/config/iterm2/sockets/
 
 # 编辑器备份文件 (例如 vim)
 *.swp
