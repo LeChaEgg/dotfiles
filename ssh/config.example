@@ -1,0 +1,46 @@
+# Copy this file to ~/.ssh/config and replace placeholders.
+# Keep real hostnames/users only in local ~/.ssh/config.
+# Auth priority:
+# - key first:      PreferredAuthentications publickey,password
+# - password first: PreferredAuthentications password,publickey
+
+# Optional: OrbStack integration (keep this near the top if used).
+Include ~/.orbstack/ssh/config
+
+# Global defaults
+Host *
+  PreferredAuthentications publickey,password
+  IdentityFile ~/.ssh/id_ed25519
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentitiesOnly yes
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+  SetEnv TERM=xterm-256color
+
+# Example: direct LAN machine
+Host local-example
+  HostName 192.168.1.10
+  User your-user
+
+# Example: cloudflared tunnel target
+Host tunnel-example
+  HostName your-host.example.com
+  User your-user
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  ProxyCommand /opt/homebrew/bin/cloudflared access ssh --hostname %h
+
+# Example: wildcard rule for Cloudflare tunnel hosts
+Host cf-*
+  HostName %h
+  User your-user
+  StrictHostKeyChecking no
+  UserKnownHostsFile /dev/null
+  ProxyCommand /opt/homebrew/bin/cloudflared access ssh --hostname %h
+
+# Example: override auth priority for one host
+Host password-first-example
+  HostName auth.example.com
+  User your-user
+  PreferredAuthentications password,publickey

@@ -7,6 +7,11 @@
 /config/iterm2/AppSupport
 /config/iterm2/sockets/
 
+# ssh: templates only
+/ssh/*
+!/ssh/README.md
+!/ssh/config.example
+
 # 编辑器备份文件 (例如 vim)
 *.swp
 *~

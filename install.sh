@@ -136,40 +136,24 @@ link_dotfiles() {
       echo "    Linked $src_path -> $dest_path"
   done
   
-  # --- 3. 链接 .ssh 目录下的安全文件 ---
-  local SSH_SRC_DIR="$DOTFILES_DIR/ssh"
+  # --- 3. 仅部署 SSH 模板配置，不链接私钥文件 ---
+  local SSH_TEMPLATE_PATH="$DOTFILES_DIR/ssh/config.example"
   local SSH_DEST_DIR="$HOME/.ssh"
-  
-  # 检查 ssh 源目录是否存在
-  if [ -d "$SSH_SRC_DIR" ]; then
+  local SSH_DEST_CONFIG="$SSH_DEST_DIR/config"
+
+  if [ -f "$SSH_TEMPLATE_PATH" ]; then
     mkdir -p "$SSH_DEST_DIR" && chmod 700 "$SSH_DEST_DIR"
-    echo -e "\n  Linking .ssh files..."
+    echo -e "\n  Installing SSH config template..."
 
-    for item in "$SSH_SRC_DIR"/*; do
-      local item_name=$(basename "$item")
-      # 忽略 .gitignore 文件本身
-      if [ "$item_name" == ".gitignore" ]; then
-          continue
-      fi
-
-      local src_path="$item"
-      local dest_path="$SSH_DEST_DIR/$item_name"
-
-      if [ -L "$dest_path" ]; then
-          echo "    Symlink already exists for $dest_path. Skipping."
-          continue
-      fi
-
-      if [ -e "$dest_path" ]; then
-          echo "    Backing up existing $dest_path to $dest_path.bak"
-          mv "$dest_path" "$dest_path.bak"
-      fi
-
-      ln -s "$src_path" "$dest_path"
-      echo "    Linked $src_path -> $dest_path"
-    done
+    if [ -e "$SSH_DEST_CONFIG" ]; then
+      echo "    ~/.ssh/config already exists. Skipping template copy."
+    else
+      cp "$SSH_TEMPLATE_PATH" "$SSH_DEST_CONFIG"
+      chmod 600 "$SSH_DEST_CONFIG"
+      echo "    Copied template to ~/.ssh/config"
+    fi
   fi
-  
+
   echo -e "\n  ✅ Symlinking complete."
 }
 
