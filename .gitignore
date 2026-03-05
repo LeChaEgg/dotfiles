@@ -2,10 +2,7 @@
 .DS_Store
 
 #local folders
-/karabiner/automatic_backups/
-/zed/conversations/
-/zed/prompts/
-/zed/themes/
+/config/karabiner/automatic_backups/
 
 # 编辑器备份文件 (例如 vim)
 *.swp
