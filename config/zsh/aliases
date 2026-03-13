@@ -74,6 +74,7 @@ alias vt="nvim ~/.config/tmux/tmux.conf"
 # source files 
 alias sz='source ~/.zshrc'
 alias sf='source ./.venv/bin/activate'
+alias reload='exec zsh'
 
 # freqtrade
 alias freqtrade='docker compose run --rm freqtrade'

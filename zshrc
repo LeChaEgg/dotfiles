@@ -73,3 +73,9 @@ export PATH="/Library/TeX/texbin:$PATH"
 
 # Added by Antigravity
 export PATH="/Users/hxie/.antigravity/antigravity/bin:$PATH"
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f '/Users/hxie/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/hxie/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+#if [ -f '/Users/hxie/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/hxie/google-cloud-sdk/completion.zsh.inc'; fi
