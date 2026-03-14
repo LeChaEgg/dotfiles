@@ -15,6 +15,8 @@
 - 所以你在 `~/.config/...` 修改时，本质是在改 repo 里的文件，`git status` 会看到改动
 - `~/.ssh` 不做软链接，只在缺失时从模板复制 `ssh/config.example` 到本地 `~/.ssh/config`
 
+更完整的日常使用说明、快捷键速查和“改哪里”的索引见 [HANDBOOK.md](./HANDBOOK.md)。
+
 ## 快速开始
 
 1. 克隆仓库到本地（建议 `~/dotfiles`）
