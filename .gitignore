@@ -6,6 +6,7 @@
 /config/gh/hosts.yml
 /config/iterm2/AppSupport
 /config/iterm2/sockets/
+/config/zsh/aliases.local
 
 # ssh: templates only
 /ssh/*

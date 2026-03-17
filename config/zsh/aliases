@@ -78,3 +78,5 @@ alias reload='exec zsh'
 
 # freqtrade
 alias freqtrade='docker compose run --rm freqtrade'
+
+[ -f "$HOME/.config/zsh/aliases.local" ] && source "$HOME/.config/zsh/aliases.local"

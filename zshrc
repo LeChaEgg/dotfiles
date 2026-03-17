@@ -79,3 +79,5 @@ if [ -f '/Users/hxie/google-cloud-sdk/path.zsh.inc' ]; then . '/Users/hxie/googl
 
 # The next line enables shell command completion for gcloud.
 #if [ -f '/Users/hxie/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/hxie/google-cloud-sdk/completion.zsh.inc'; fi
+export AWS_PROFILE=bastion
+export AWS_REGION=ap-northeast-1
