@@ -206,6 +206,8 @@ Neovim 配置集中在 `config/nvim/`。
 
 Yazi 是你的终端文件管理器，配置在 `config/yazi/`。
 
+如果是 Ubuntu 服务器，不要直接照搬 `config/yazi/`；仓库里单独提供了一份更保守的服务器版 profile：`profiles/yazi-ubuntu/`。
+
 ### 6.1 最重要的启动方式
 
 不要只记 `yazi`，更推荐记 `y`。

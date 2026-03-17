@@ -1,0 +1,24 @@
+"$schema" = "https://yazi-rs.github.io/schemas/yazi.json"
+
+[mgr]
+ratio          = [ 1, 4, 5 ]
+sort_by        = "mtime"
+sort_reverse   = true
+sort_dir_first = true
+linemode       = "size"
+show_hidden    = true
+show_symlink   = true
+scrolloff      = 5
+title_format   = "Yazi: {cwd}"
+
+[preview]
+wrap     = "yes"
+tab_size = 2
+
+[opener]
+edit = [
+  { run = '${EDITOR:-vim} "$@"', desc = "$EDITOR", block = true, for = "unix" },
+]
+open = [
+  { run = 'if command -v xdg-open >/dev/null 2>&1; then xdg-open "$@"; else ${EDITOR:-vim} "$@"; fi', desc = "Open", for = "linux" },
+]
