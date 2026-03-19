@@ -107,13 +107,13 @@
                                     },
                                     { "select_input_source": { "language": "^en$" } },
                                     {
-                                        "hold_down_milliseconds": 50,
+                                        "hold_down_milliseconds": 10,
                                         "key_code": "vk_none"
                                     },
                                     {
-                                        "hold_down_milliseconds": 20,
+                                        "hold_down_milliseconds": 50,
                                         "key_code": "spacebar",
-                                        "modifiers": ["left_control"]
+                                        "modifiers": ["left_option"]
                                     }
                                 ],
                                 "type": "basic"
@@ -136,13 +136,13 @@
                                     },
                                     { "select_input_source": { "language": "^en$" } },
                                     {
-                                        "hold_down_milliseconds": 50,
+                                        "hold_down_milliseconds": 10,
                                         "key_code": "vk_none"
                                     },
                                     {
-                                        "hold_down_milliseconds": 20,
+                                        "hold_down_milliseconds": 50,
                                         "key_code": "spacebar",
-                                        "modifiers": ["left_control"]
+                                        "modifiers": ["left_option"]
                                     }
                                 ],
                                 "type": "basic"

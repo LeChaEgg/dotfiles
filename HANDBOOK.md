@@ -131,7 +131,7 @@
 | 关闭当前 pane | `Ctrl-w` |
 | 把当前 pane 拆到新窗口 | `Ctrl-n` |
 | 新建窗口 | `Ctrl-t` |
-| 上一个/下一个窗口 | `Ctrl-[` / `Ctrl-]` |
+| 上一个/下一个窗口 | `Ctrl-Left` / `Ctrl-Right` |
 | 打开 session/window 树 | `Ctrl-s` |
 
 ### 4.3 prefix 和其他说明
@@ -140,6 +140,9 @@
 - reload 配置：`prefix` 后按 `r`
 - 鼠标已开启，可以直接点 pane、滚动、选中
 - pane/window 编号从 1 开始
+- `Ctrl-[` 不再用于切窗口，因为终端里它和 `Esc` 是同一个输入
+- `Ctrl-p` / `Ctrl-]` 仍保留为窗口切换 fallback
+- 如果 `Ctrl-Left` / `Ctrl-Right` 没反应，先检查 macOS 的 Mission Control 里是否把它们占用为切换 Spaces
 
 ### 4.4 忘了以后看哪里
 
