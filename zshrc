@@ -19,6 +19,12 @@ export ZIM_CONFIG_FILE="${HOME}/.config/zim/zimrc"
 setopt HIST_IGNORE_ALL_DUPS
 # Set editor default keymap to emacs (`-e`) or vi (`-v`)
 bindkey -v
+# Restore word navigation in vi insert mode
+bindkey '^[f' forward-word      # Option+→
+bindkey '^[b' backward-word     # Option+←
+bindkey '^A'  beginning-of-line # Ctrl+A
+bindkey '^E'  end-of-line       # Ctrl+E
+
 setopt CORRECT
 SPROMPT='zsh: correct %F{red}%R%f to %F{green}%r%f [nyae]? '
 WORDCHARS=${WORDCHARS//[\/]}

@@ -1,15 +1,11 @@
 #!/bin/zsh
 
 # Aliases
-if [[ -x $(command -v eza) ]]; then
-	alias ls='eza --icons'
-	alias l='eza --icons --sort Name'
-	alias ll='eza --icons --sort Name --long'
-	alias lh='eza --icons --sort newest --group --long'
-else
-	alias ls='ls --color=auto'
-	alias lh='ls -alhrt'
-fi
+alias ls='ls'
+alias l='ls -CF'
+alias la='ls -A'
+alias ll='ls -alF'
+alias lh='ls -alht'
 alias mv='mv -i' # confirm override when moving
 alias cp='cp -i' # confirm override when copying
 
@@ -17,18 +13,6 @@ alias cp='cp -i' # confirm override when copying
 alias v='nvim'
 alias vo='nvim -O'
 alias vd='nvim -d'
-
-# utilities
-alias p='python3'
-alias rp='realpath'
-alias t='type'
-alias b='bat'
-
-# check usage
-alias listsize='du -shc ./*'
-alias dirsize='du -hs .'
-alias cpu='ps -eo user,cmd:120,%cpu --sort=+%cpu'
-alias mem='ps -eo user,cmd:120,%mem --sort=+%mem'
 
 # screen
 alias sls='screen -ls'
@@ -67,7 +51,7 @@ alias lp='lazygit -p'
 # open dotfiles in vim
 alias vv="nvim ~/.config/nvim"
 alias va="nvim ~/.config/zsh/aliases"
-alias vb="nvim ~/.bashrc"
+alias vz="nvim ~/.zshrc"
 alias vs="nvim ~/.ssh/config"
 alias vt="nvim ~/.config/tmux/tmux.conf"
 
