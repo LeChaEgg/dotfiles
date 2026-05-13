@@ -18,7 +18,6 @@ marker_selected = { fg = "#ffde57", bg = "#ffde57" }
 # Tab
 tab_active   = { reversed = true }
 tab_inactive = {}
-tab_width    = 1
 
 # Count
 count_copied   = { fg = "#222327", bg = "#6ae073" }
@@ -119,41 +118,41 @@ rules = [
     { mime = "application/{archive,cpio,arj,xar,ms-cab*}", fg = "#ffde57" },
 
     # Broken links
-    { name = "*", is = "orphan", fg = "#8c8c8c", crossed = true },
+    { url = "*", is = "orphan", fg = "#8c8c8c", crossed = true },
 
     # Symlinks files
-    { name = "*", is = "link", fg = "#e45c9c" },
-    { name = "*/", is = "link", fg = "#5297a5" },
+    { url = "*", is = "link", fg = "#e45c9c" },
+    { url = "*/", is = "link", fg = "#5297a5" },
 
     # Executables
-    { name = "*", is = "exec", fg = "#ff6e64" },
+    { url = "*", is = "exec", fg = "#ff6e64" },
 
     # Languages
-    { name = "*.{c,c++,cake,cats,cc,cl,cp,cpp,cs}", fg = "#6ae073" },
-    { name = "*.{cshtml,css,csx,cxx,emacs,go}", fg = "#6ae073" },
-    { name = "*.{h,h++,hh,hpp,hs,hxx,idc,inl,ipp,ipynb}", fg = "#6ae073" },
-    { name = "*.{java,jl,js,json}", fg = "#6ae073" },
-    { name = "*.{ksh,l,lisp,lsp,lua,m}", fg = "#6ae073" },
-    { name = "*.{php,pl,ps1,py,ron}", fg = "#6ae073" },
-    { name = "*.{sass,sh,tcc,tpp}", fg = "#6ae073" },
-    { name = "*.{vbs,w,}", fg = "#6ae073" },
-    { name = "*.{sh,bash,zsh,fish}", fg = "#6ae073" },
+    { url = "*.{c,c++,cake,cats,cc,cl,cp,cpp,cs}", fg = "#6ae073" },
+    { url = "*.{cshtml,css,csx,cxx,emacs,go}", fg = "#6ae073" },
+    { url = "*.{h,h++,hh,hpp,hs,hxx,idc,inl,ipp,ipynb}", fg = "#6ae073" },
+    { url = "*.{java,jl,js,json}", fg = "#6ae073" },
+    { url = "*.{ksh,l,lisp,lsp,lua,m}", fg = "#6ae073" },
+    { url = "*.{php,pl,ps1,py,ron}", fg = "#6ae073" },
+    { url = "*.{sass,sh,tcc,tpp}", fg = "#6ae073" },
+    { url = "*.{vbs,w,}", fg = "#6ae073" },
+    { url = "*.{sh,bash,zsh,fish}", fg = "#6ae073" },
 
-    { name = "*.{cfg,conf,yaml,yml,toml,inc}", fg = "#ffde57" },
-    { name = "*.{diff,patch,matlab,ron}", fg = "#ffde57" },
+    { url = "*.{cfg,conf,yaml,yml,toml,inc}", fg = "#ffde57" },
+    { url = "*.{diff,patch,matlab,ron}", fg = "#ffde57" },
 
-    { name = "*.{jinja,markdown,md,mkd,mkdn,mkdown,tex}", fg = "#00d1e9" },
-    { name = "*.{htm,html,xhtml,xml}", fg = "#00d1e9" },
+    { url = "*.{jinja,markdown,md,mkd,mkdn,mkdown,tex}", fg = "#00d1e9" },
+    { url = "*.{htm,html,xhtml,xml}", fg = "#00d1e9" },
 
     # Emacs
-    { name = "*.{el,elc}", fg = "#6ae073" },
-    { name = "*.{org}", fg = "#cd7bf6" },
+    { url = "*.{el,elc}", fg = "#6ae073" },
+    { url = "*.{org}", fg = "#cd7bf6" },
 
     # Documents
-    { name = "*.{pdf,txt,rtf}", fg = "#b3b3b3" },
-    { name = "*.{pdf,doc,docx,xls,xlsx,ppt,pptx}", fg = "#b3b3b3" },
+    { url = "*.{pdf,txt,rtf}", fg = "#b3b3b3" },
+    { url = "*.{pdf,doc,docx,xls,xlsx,ppt,pptx}", fg = "#b3b3b3" },
 
     # Fallback
-    { name = "*", fg = "#f4f4f4" },
-    { name = "*/", fg = "#4e9dff" }
+    { url = "*", fg = "#f4f4f4" },
+    { url = "*/", fg = "#4e9dff" }
 ]
