@@ -164,19 +164,18 @@
                         ]
                     },
                     {
-                        "description": "Left_Shift * 2 -> Left_Option + T",
-                        "enabled": false,
+                        "description": "Right_Shift * 2 -> Left_Option + T",
                         "manipulators": [
                             {
                                 "conditions": [
                                     {
-                                        "name": "l-shift",
+                                        "name": "r-shift",
                                         "type": "variable_if",
                                         "value": 1
                                     }
                                 ],
                                 "from": {
-                                    "key_code": "left_shift",
+                                    "key_code": "right_shift",
                                     "modifiers": { "optional": ["caps_lock"] }
                                 },
                                 "to": [
@@ -189,15 +188,20 @@
                             },
                             {
                                 "from": {
-                                    "key_code": "left_shift",
+                                    "key_code": "right_shift",
                                     "modifiers": { "optional": ["caps_lock"] }
                                 },
-                                "to": [{ "key_code": "left_shift" }],
+                                "to": [
+                                    {
+                                        "key_code": "right_shift",
+                                        "lazy": true
+                                    }
+                                ],
                                 "to_delayed_action": {
                                     "to_if_canceled": [
                                         {
                                             "set_variable": {
-                                                "name": "l-shift",
+                                                "name": "r-shift",
                                                 "value": 0
                                             }
                                         }
@@ -205,7 +209,7 @@
                                     "to_if_invoked": [
                                         {
                                             "set_variable": {
-                                                "name": "l-shift",
+                                                "name": "r-shift",
                                                 "value": 0
                                             }
                                         }
@@ -214,7 +218,7 @@
                                 "to_if_alone": [
                                     {
                                         "set_variable": {
-                                            "name": "l-shift",
+                                            "name": "r-shift",
                                             "value": 1
                                         }
                                     }

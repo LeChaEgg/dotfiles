@@ -4,3 +4,7 @@ disabled = false
 [username]
 disabled = false
 show_always = true
+[aws]
+disabled = true
+[gcloud]
+disabled = true

@@ -1,16 +1,16 @@
-theme = Apple System Colors
+# ── Appearance ────────────────────────────────────────────────────────────────
+theme = dark:Catppuccin Mocha,light:Catppuccin Latte
 title = ""
 window-subtitle = false
-macos-titlebar-style = tabs 
-#transparent / hidden / tabs
+macos-titlebar-style = tabs
+# transparent / hidden / tabs
 macos-titlebar-proxy-icon = hidden
+window-padding-x = 8
+window-padding-y = 6
 
-cursor-style-blink = true
-mouse-hide-while-typing = true
-focus-follows-mouse = true
-
-font-family = JetBrainsMono Nerd Font 
-font-size = 15 
+# ── Font ──────────────────────────────────────────────────────────────────────
+font-family = JetBrainsMono Nerd Font
+font-size = 15
 font-style = bold
 font-feature = +calt
 font-feature = +liga
@@ -18,16 +18,42 @@ font-feature = +dlig
 font-feature = +rlig
 bold-is-bright = true
 
+# ── Cursor & Mouse ────────────────────────────────────────────────────────────
+cursor-style-blink = true
+mouse-hide-while-typing = true
+focus-follows-mouse = true
+
+# ── Scrollback ────────────────────────────────────────────────────────────────
+# Larger buffer helps when tailing logs or reviewing SSH output
+scrollback-limit = 50000
+
+# ── Clipboard ─────────────────────────────────────────────────────────────────
+copy-on-select = clipboard
+clipboard-read = allow
+clipboard-write = allow
+
+# ── Shell Integration ─────────────────────────────────────────────────────────
+shell-integration = detect
+# Marks each command so you can jump between outputs with cmd+shift+up/down
+
+# ── Window Behaviour ──────────────────────────────────────────────────────────
+window-inherit-working-directory = true
+# Guard against accidentally closing an active SSH session
+confirm-close-surface = true
+
+# ── Quick Terminal ────────────────────────────────────────────────────────────
 quick-terminal-position = bottom
+quick-terminal-screen = main
+quick-terminal-animation-duration = 0.1
+
+# ── Keybinds ──────────────────────────────────────────────────────────────────
 keybind = global:opt+t=toggle_quick_terminal
-keybind = "cmd+.=text:\x03"
-keybind = "cmd+f=write_scrollback_file:open"
+keybind = cmd+.=text:\x03
+# cmd+shift+up/down to jump between command outputs (shell integration)
+keybind = cmd+shift+up=jump_to_prompt:-1
+keybind = cmd+shift+down=jump_to_prompt:1
 
+# ── Updates ───────────────────────────────────────────────────────────────────
 auto-update = check
-auto-update-channel = stable 
-#stable / tip
-
-
-# This is the configuration file for Ghostty.
-#/Users/hxie/Library/Application Support/com.mitchellh.ghostty/config
-#~/.config/ghostty/config
+auto-update-channel = stable
+# stable / tip
