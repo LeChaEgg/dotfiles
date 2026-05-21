@@ -89,6 +89,7 @@ link_dotfiles() {
       "zshrc;~/.zshrc"
       "zprofile;~/.zprofile"
       "gitconfig;~/.gitconfig"
+      "config/hammerspoon;~/.hammerspoon"
   )
 
   echo -e "\n  Linking root files..."

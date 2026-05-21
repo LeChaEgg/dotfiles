@@ -11,7 +11,7 @@
 ## 核心逻辑
 
 - 这个仓库是配置的“真实文件位置（source of truth）”
-- `install.sh` 会把 `~/.zshrc`、`~/.zprofile`、`~/.gitconfig` 以及 `~/.config/*` 链接到本仓库对应文件
+- `install.sh` 会把 `~/.zshrc`、`~/.zprofile`、`~/.gitconfig`、`~/.hammerspoon` 以及 `~/.config/*` 链接到本仓库对应文件
 - 所以你在 `~/.config/...` 修改时，本质是在改 repo 里的文件，`git status` 会看到改动
 - `~/.ssh` 不做软链接，只在缺失时从模板复制 `ssh/config.example` 到本地 `~/.ssh/config`
 
@@ -62,7 +62,7 @@ git push
 
 ## 主要目录
 
-- `config/`：各软件配置（nvim、tmux、yazi、karabiner 等）
+- `config/`：各软件配置（nvim、tmux、yazi、karabiner、hammerspoon 等）
 - `zshrc` / `zprofile` / `gitconfig`：用户级基础配置
 - `ssh/config.example`：SSH 模板
 - `install.sh`：初始化安装与软链接脚本

@@ -11,7 +11,7 @@
 
 这个仓库的核心原则很简单：repo 里的文件就是 source of truth。
 
-- `install.sh` 会把 `zshrc`、`zprofile`、`gitconfig` 链接到 home 目录。
+- `install.sh` 会把 `zshrc`、`zprofile`、`gitconfig`、`config/hammerspoon` 链接到 home 目录。
 - `config/` 下的内容会被整体链接到 `~/.config/`。
 - 所以你平时改 `~/.config/...`，本质上就是在改这个仓库里的文件。
 - `ssh/config.example` 不会被软链接，只会在本地缺失时复制成 `~/.ssh/config` 模板。
@@ -41,6 +41,7 @@
 | gh | GitHub CLI | `config/gh/config.yml` | gh aliases |
 | Git | Git 用户级设置 | `gitconfig` | 用户名、邮箱、默认编辑器 |
 | Ghostty | 第三方终端 | `config/ghostty/config` | 字体、快速终端、标题栏 |
+| Hammerspoon | macOS 自动化 | `config/hammerspoon/init.lua` | 输入法切换、前台应用自动化 |
 | Karabiner | 键盘改键 | `config/karabiner/` | Hyper、语言切换、窗口管理 |
 | btop | 系统监控 | `config/btop/btop.conf` | 界面布局、颜色、采样行为 |
 | SSH | SSH 模板 | `ssh/config.example` | Host 模板、代理、认证方式 |
