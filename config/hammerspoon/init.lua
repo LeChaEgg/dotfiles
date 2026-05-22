@@ -43,7 +43,6 @@ for inputSourceID, bundleIDs in pairs(appGroups) do
 end
 
 local activeTasks = {}
-local lastInputSourceID = nil
 
 local function resolveMacism()
   for _, candidate in ipairs(macismCandidates) do
@@ -64,7 +63,8 @@ local function switchInputSource(inputSourceID)
     return
   end
 
-  if lastInputSourceID == inputSourceID then
+  local currentSourceID = hs.keycodes.currentSourceID()
+  if currentSourceID == inputSourceID then
     log.i(string.format("skip switch, already on %s", inputSourceID))
     return
   end
@@ -74,7 +74,6 @@ local function switchInputSource(inputSourceID)
     activeTasks[task] = nil
 
     if exitCode == 0 then
-      lastInputSourceID = inputSourceID
       log.i(string.format("switched to %s", inputSourceID))
       return
     end
