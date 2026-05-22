@@ -2,7 +2,14 @@ config:
   fallback-icon: "?"
   show-name: true
   icon-position: left
-  multi-pane-icon: ""
+  multi-pane-icon: "﯈"
 
 icons:
   claude: "󱚝"
+  nvim: ""
+  vim: ""
+  htop: "󰓅"
+  yazi: "󰇥"
+  nvtop: ""
+  root: "󰦣"
+  less: ""
