@@ -1,6 +1,9 @@
 local applicationWatcher = require("hs.application.watcher")
+local windowFilter = require("hs.window.filter")
 require("hs.ipc")
 local log = hs.logger.new("input-source", "info")
+local state = _G.inputSourceSwitcherState or {}
+_G.inputSourceSwitcherState = state
 
 local inputSources = {
   abc = "com.apple.keylayout.ABC",
@@ -42,7 +45,8 @@ for inputSourceID, bundleIDs in pairs(appGroups) do
   end
 end
 
-local activeTasks = {}
+state.activeTasks = state.activeTasks or {}
+state.appInputSources = appInputSources
 
 local function resolveMacism()
   for _, candidate in ipairs(macismCandidates) do
@@ -71,7 +75,7 @@ local function switchInputSource(inputSourceID)
 
   local task
   task = hs.task.new(macismBin, function(exitCode, stdOut, stdErr)
-    activeTasks[task] = nil
+    state.activeTasks[task] = nil
 
     if exitCode == 0 then
       log.i(string.format("switched to %s", inputSourceID))
@@ -92,9 +96,9 @@ local function switchInputSource(inputSourceID)
     return
   end
 
-  activeTasks[task] = true
+  state.activeTasks[task] = true
   if not task:start() then
-    activeTasks[task] = nil
+    state.activeTasks[task] = nil
     log.e("failed to start macism task")
   end
 end
@@ -115,7 +119,30 @@ local function syncInputSourceForApp(app)
   switchInputSource(inputSourceID)
 end
 
-local watcher = applicationWatcher.new(function(_, eventType, app)
+local function syncInputSourceForWindow(window)
+  if not window then
+    return
+  end
+
+  syncInputSourceForApp(window:application())
+end
+
+if state.watcher then
+  state.watcher:stop()
+  state.watcher = nil
+end
+
+if state.windowFilter then
+  state.windowFilter:unsubscribeAll()
+  state.windowFilter = nil
+end
+
+if state.ghosttyWindowFilter then
+  state.ghosttyWindowFilter:unsubscribeAll()
+  state.ghosttyWindowFilter = nil
+end
+
+state.watcher = applicationWatcher.new(function(_, eventType, app)
   if eventType ~= applicationWatcher.activated then
     return
   end
@@ -123,9 +150,31 @@ local watcher = applicationWatcher.new(function(_, eventType, app)
   syncInputSourceForApp(app)
 end)
 
-watcher:start()
+state.watcher:start()
+
+state.windowFilter = windowFilter.new()
+state.windowFilter:subscribe(windowFilter.windowFocused, function(window)
+  syncInputSourceForWindow(window)
+end)
+
+state.ghosttyWindowFilter = windowFilter
+  .new(false)
+  :setAppFilter("Ghostty", {
+    visible = true,
+    allowRoles = "*",
+  })
+
+state.ghosttyWindowFilter:subscribe({
+  windowFilter.windowCreated,
+  windowFilter.windowFocused,
+  windowFilter.windowVisible,
+}, function(window)
+  syncInputSourceForWindow(window)
+end)
+
 log.i("input source watcher started")
 
+syncInputSourceForWindow(hs.window.focusedWindow())
 syncInputSourceForApp(hs.application.frontmostApplication())
 
 hs.alert.show("Input source watcher loaded")
