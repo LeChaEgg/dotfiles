@@ -1,26 +1,73 @@
 return { -- Highlight, edit, and navigate code
   'nvim-treesitter/nvim-treesitter',
+  branch = 'main',
+  lazy = false,
   build = ':TSUpdate',
-  main = 'nvim-treesitter.configs', -- Sets main module to use for opts
-  -- [[ Configure Treesitter ]] See `:help nvim-treesitter`
-  opts = {
-    ensure_installed = { 'bash', 'c', 'diff', 'html', 'lua', 'luadoc', 'markdown', 'markdown_inline', 'query', 'vim', 'vimdoc' },
-    -- Autoinstall languages that are not installed
-    auto_install = true,
-    highlight = {
-      enable = true,
-      -- Some languages depend on vim's regex highlighting system (such as Ruby) for indent rules.
-      --  If you are experiencing weird indenting issues, add the language to
-      --  the list of additional_vim_regex_highlighting and disabled languages for indent.
-      additional_vim_regex_highlighting = { 'ruby' },
-    },
-    indent = { enable = true, disable = { 'ruby' } },
-    folding = { enabled = true },
-  },
-  -- There are additional nvim-treesitter modules that you can use to interact
-  -- with nvim-treesitter. You should go explore a few and see what interests you:
-  --
-  --    - Incremental selection: Included, see `:help nvim-treesitter-incremental-selection-mod`
-  --    - Show your current context: https://github.com/nvim-treesitter/nvim-treesitter-context
-  --    - Treesitter + textobjects: https://github.com/nvim-treesitter/nvim-treesitter-textobjects
+  opts = function()
+    local languages = {
+      'bash',
+      'c',
+      'cpp',
+      'diff',
+      'html',
+      'lua',
+      'luadoc',
+      'markdown',
+      'markdown_inline',
+      'python',
+      'query',
+      'snakemake',
+      'vim',
+      'vimdoc',
+      'xml',
+    }
+
+    local filetypes = {
+      'bash',
+      'c',
+      'cpp',
+      'diff',
+      'help',
+      'html',
+      'lua',
+      'luadoc',
+      'markdown',
+      'python',
+      'query',
+      'sh',
+      'snakemake',
+      'vim',
+      'vimdoc',
+      'xml',
+      'zsh',
+    }
+
+    return {
+      install_dir = vim.fn.stdpath 'data' .. '/site',
+      languages = languages,
+      filetypes = filetypes,
+    }
+  end,
+  config = function(_, opts)
+    require('nvim-treesitter').setup {
+      install_dir = opts.install_dir,
+    }
+
+    require('nvim-treesitter').install(opts.languages)
+
+    vim.api.nvim_create_autocmd('FileType', {
+      group = vim.api.nvim_create_augroup('CustomTreeSitter', { clear = true }),
+      pattern = opts.filetypes,
+      callback = function(args)
+        local ok = pcall(vim.treesitter.start, args.buf)
+        if not ok then
+          return
+        end
+
+        vim.bo[args.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        vim.wo.foldmethod = 'expr'
+        vim.wo.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
+      end,
+    })
+  end,
 }

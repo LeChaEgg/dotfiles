@@ -29,5 +29,5 @@ vim.o.scrolloff = 5
 vim.o.confirm = true
 vim.opt.autochdir = true
 vim.o.foldmethod = 'expr'
-vim.o.foldexpr = 'nvim_treesitter#foldexpr()'
+vim.o.foldexpr = 'v:lua.vim.treesitter.foldexpr()'
 vim.o.foldlevel = 99
