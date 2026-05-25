@@ -73,6 +73,7 @@ end
 
 state.activeTasks = state.activeTasks or {}
 state.appInputSources = appInputSources
+state.lastInputSourceContextKey = nil
 
 local function resolveMacism()
   for _, candidate in ipairs(macismCandidates) do
@@ -167,6 +168,12 @@ local function syncInputSourceForBrowser(app)
     inputSourceID = inputSources.abc
   end
 
+  local contextKey = string.format("browser:%s:%s", bundleID, host or "<unknown>")
+  if state.lastInputSourceContextKey == contextKey then
+    return true
+  end
+
+  state.lastInputSourceContextKey = contextKey
   if hs.keycodes.currentSourceID() == inputSourceID then
     return true
   end
@@ -234,6 +241,12 @@ local function syncInputSourceForApp(app)
     return
   end
 
+  local contextKey = string.format("app:%s", bundleID)
+  if state.lastInputSourceContextKey == contextKey then
+    return
+  end
+
+  state.lastInputSourceContextKey = contextKey
   log.i(string.format("app %s -> %s", bundleID, inputSourceID))
   switchInputSource(inputSourceID)
 end
