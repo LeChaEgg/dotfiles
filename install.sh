@@ -313,6 +313,7 @@ link_dotfiles() {
       local tmux_dest_dir="$HOME/.config/tmux"
       prepare_real_dir "$tmux_dest_dir"
       link_path "$DOTFILES_DIR/profiles/tmux-ubuntu/tmux.conf" "$tmux_dest_dir/tmux.conf"
+      link_path "$DOTFILES_DIR/profiles/tmux-ubuntu/tmux.conf" "$HOME/.tmux.conf"
   }
 
   # --- 1. 链接 Home 根目录下的文件 ---
