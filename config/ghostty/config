@@ -21,6 +21,7 @@ bold-is-bright = true
 # ── Cursor & Mouse ────────────────────────────────────────────────────────────
 cursor-style-blink = true
 mouse-hide-while-typing = true
+mouse-reporting = true
 focus-follows-mouse = true
 
 # ── Scrollback ────────────────────────────────────────────────────────────────
@@ -34,6 +35,7 @@ clipboard-write = allow
 
 # ── Shell Integration ─────────────────────────────────────────────────────────
 shell-integration = detect
+shell-integration-features = cursor,sudo,title,ssh-env,ssh-terminfo,path
 # Marks each command so you can jump between outputs with cmd+shift+up/down
 
 # ── Window Behaviour ──────────────────────────────────────────────────────────
