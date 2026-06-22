@@ -1,11 +1,19 @@
 #!/usr/bin/env zsh
 
 [[ $- != *i* ]] && return
-export EDITOR="nvim"
+
+if command -v nvim >/dev/null 2>&1; then
+	export EDITOR="${EDITOR:-nvim}"
+else
+	export EDITOR="${EDITOR:-vim}"
+fi
+
 export PATH="$PATH:$HOME/.local/bin"
 export W3M_DIR="$HOME/.cache/w3m"
 export PYTHONWARNINGS="ignore:The parameter -j is used more than once:UserWarning:click.core:"
-export PATH="/opt/homebrew/opt/python@3.13/libexec/bin:$PATH"
+
+[ -d /opt/homebrew/opt/python@3.13/libexec/bin ] && export PATH="/opt/homebrew/opt/python@3.13/libexec/bin:$PATH"
+
 [ -f "$HOME/.config/zsh/aliases" ] && source "$HOME/.config/zsh/aliases"
 [ -f "$HOME/.config/zsh/fzf.zsh" ] && source "$HOME/.config/zsh/fzf.zsh" 
 # 加载隐私环境变量 (仅在交互式模式下)
@@ -37,46 +45,55 @@ if [[ ! -e ${ZIM_HOME}/zimfw.zsh ]]; then
   if (( ${+commands[curl]} )); then
     curl -fsSL --create-dirs -o ${ZIM_HOME}/zimfw.zsh \
         https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh
-  else
+  elif (( ${+commands[wget]} )); then
     mkdir -p ${ZIM_HOME} && wget -nv -O ${ZIM_HOME}/zimfw.zsh \
         https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh
   fi
 fi
 # Install missing modules, and update ${ZIM_HOME}/init.zsh if missing or outdated.
-if [[ ! ${ZIM_HOME}/init.zsh -nt ${ZIM_CONFIG_FILE:-${ZDOTDIR:-${HOME}}/.zimrc} ]]; then
+if [[ -r ${ZIM_HOME}/zimfw.zsh && ! ${ZIM_HOME}/init.zsh -nt ${ZIM_CONFIG_FILE:-${ZDOTDIR:-${HOME}}/.zimrc} ]]; then
   source ${ZIM_HOME}/zimfw.zsh init
 fi
 # Initialize modules.
-source ${ZIM_HOME}/init.zsh
+[[ -r ${ZIM_HOME}/init.zsh ]] && source ${ZIM_HOME}/init.zsh
 zmodload -F zsh/terminfo +p:terminfo
 # Bind ^[[A/^[[B manually so up/down works both before and after zle-line-init
-for key ('^[[A' '^P' ${terminfo[kcuu1]}) bindkey ${key} history-substring-search-up
-for key ('^[[B' '^N' ${terminfo[kcud1]}) bindkey ${key} history-substring-search-down
-for key ('k') bindkey -M vicmd ${key} history-substring-search-up
-for key ('j') bindkey -M vicmd ${key} history-substring-search-down
+if (( ${+widgets[history-substring-search-up]} && ${+widgets[history-substring-search-down]} )); then
+	for key ('^[[A' '^P' ${terminfo[kcuu1]}) bindkey ${key} history-substring-search-up
+	for key ('^[[B' '^N' ${terminfo[kcud1]}) bindkey ${key} history-substring-search-down
+	for key ('k') bindkey -M vicmd ${key} history-substring-search-up
+	for key ('j') bindkey -M vicmd ${key} history-substring-search-down
+fi
 unset key
 ####Zim-end####
 
-export HOMEBREW_NO_AUTO_UPDATE=1
-export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
+if command -v brew >/dev/null 2>&1; then
+	export HOMEBREW_NO_AUTO_UPDATE=1
+fi
+
+[ -d /opt/homebrew/opt/node@22/bin ] && export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
 ####Yazi-start####
-function y() {
-	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-	yazi "$@" --cwd-file="$tmp"
-	IFS= read -r -d '' cwd < "$tmp"
-	[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
-	rm -f -- "$tmp"
-}
+if command -v yazi >/dev/null 2>&1; then
+	function y() {
+		local tmp cwd
+		tmp="$(mktemp "${TMPDIR:-/tmp}/yazi-cwd.XXXXXX")" || return
+		yazi "$@" --cwd-file="$tmp"
+		IFS= read -r -d '' cwd < "$tmp"
+		[ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
+		rm -f -- "$tmp"
+	}
+fi
 #####Yazi# ----------------------------------------
 
 # FZF (Fuzzy Finder) Setup
-if [[ ! "$PATH" == */opt/homebrew/opt/fzf/bin* ]]; then
-  PATH="${PATH:+${PATH}:}/opt/homebrew/opt/fzf/bin"
+if [ -d /opt/homebrew/opt/fzf/bin ] && [[ ! "$PATH" == */opt/homebrew/opt/fzf/bin* ]]; then
+	PATH="${PATH:+${PATH}:}/opt/homebrew/opt/fzf/bin"
 fi
-source <(fzf --zsh)
+if command -v fzf >/dev/null 2>&1 && fzf --zsh >/dev/null 2>&1; then
+	source <(fzf --zsh)
+fi
 # -----------------------------------------end#####
-export PATH="/Library/TeX/texbin:$PATH"
+[ -d /Library/TeX/texbin ] && export PATH="/Library/TeX/texbin:$PATH"
 
 # Added by Antigravity
-export PATH="/Users/hxie/.antigravity/antigravity/bin:$PATH"
-
+[ -d "$HOME/.antigravity/antigravity/bin" ] && export PATH="$HOME/.antigravity/antigravity/bin:$PATH"

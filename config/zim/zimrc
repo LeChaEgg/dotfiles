@@ -12,7 +12,9 @@ zmodule git-info
 zmodule duration-info
 zmodule kiesman99/zim-zoxide # enhanced cd
 zmodule joke/zim-starship #https://github.com/starship/starship
-zmodule homebrew #https://github.com/zimfw/homebrew
+if [[ "$OSTYPE" == darwin* ]]; then
+  zmodule homebrew #https://github.com/zimfw/homebrew
+fi
 
 # 2. 补全系统 (Completion System)
 #    顺序: 定义(definitions) -> 引擎(engine) -> 初始化(initializer)

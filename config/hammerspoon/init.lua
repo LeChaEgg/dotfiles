@@ -57,6 +57,7 @@ local appGroups = {
     "com.apple.Terminal",
     "com.apple.finder",
     "com.apple.mail",
+    "com.apple.Keynote",
   },
   [inputSources.japanese] = {
     "net.ankiweb.launcher",

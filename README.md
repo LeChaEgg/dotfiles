@@ -1,68 +1,54 @@
 # Dotfiles
 
-个人 macOS 开发环境配置仓库，用于在新机器上快速恢复常用终端与编辑器环境。
+我的终端和常用开发工具配置。
 
-## 适用场景
+主要给 macOS 用；Ubuntu 也可以跑，脚本会跳过不可用的软件和 macOS 专用配置。
 
-- 新电脑初始化：一次安装常用工具并挂载配置
-- 日常迭代：本机改配置后可直接通过 Git 管理变更
-- 公共仓库托管：保留可公开配置，排除敏感或机器本地数据
-
-## 核心逻辑
-
-- 这个仓库是配置的“真实文件位置（source of truth）”
-- `install.sh` 会把 `~/.zshrc`、`~/.zprofile`、`~/.gitconfig`、`~/.hammerspoon` 以及 `~/.config/*` 链接到本仓库对应文件
-- 所以你在 `~/.config/...` 修改时，本质是在改 repo 里的文件，`git status` 会看到改动
-- `~/.ssh` 不做软链接，只在缺失时从模板复制 `ssh/config.example` 到本地 `~/.ssh/config`
-
-更完整的日常使用说明、快捷键速查和“改哪里”的索引见 [HANDBOOK.md](./HANDBOOK.md)。
-
-## 快速开始
-
-1. 克隆仓库到本地（建议 `~/dotfiles`）
-2. 执行：
+## 安装
 
 ```bash
+git clone <repo-url> ~/dotfiles
 cd ~/dotfiles
 bash install.sh
 ```
 
-3. 重启 shell，或执行：
+装完重开终端，或执行：
 
 ```bash
 source ~/.zshrc
 ```
 
-## 日常更新流程
+## 脚本会做什么
 
-1. 正常使用软件并调整配置
-2. 查看变更：
+- macOS：用 Homebrew 安装常用 CLI 工具和字体
+- Ubuntu：用 `apt` 安装能找到的工具，找不到就跳过
+- 链接 `zshrc`、`zprofile`、`gitconfig`
+- 链接可用的 `~/.config/*` 配置
+- macOS 才链接 Hammerspoon、Karabiner 等桌面配置
+- Ubuntu 的 Yazi 使用 `profiles/yazi-ubuntu/` 精简配置
+- `~/.ssh/config` 只在不存在时从模板复制，不链接私钥
+
+## 日常怎么改
+
+这个仓库就是配置文件本体。比如改 `~/.config/nvim`，实际改到的就是这里的 `config/nvim`。
+
+常用流程：
 
 ```bash
 git status
-```
-
-3. 提交并推送：
-
-```bash
 git add -A
 git commit -m "chore: update dotfiles"
 git push
 ```
 
-## 安全与公开仓库约定
+## 目录
 
-- 已忽略本地/敏感数据（见 `.gitignore`），例如：
-  - `config/gh/hosts.yml`
-  - `config/karabiner/automatic_backups/`
-  - `config/iterm2/AppSupport`
-  - `config/iterm2/sockets/`
-- `ssh/` 目录只保留模板文件，不存私钥、`known_hosts`、真实主机信息
-- 若新增新软件配置，先确认是否包含 token、账号、机器路径，再决定是否纳入版本管理
+- `config/`：nvim、tmux、yazi、zsh、starship 等配置
+- `profiles/yazi-ubuntu/`：Ubuntu/服务器用的 Yazi 配置
+- `ssh/config.example`：SSH 配置模板
+- `install.sh`：安装和软链接脚本
+- `HANDBOOK.md`：更细的使用说明和快捷键索引
 
-## 主要目录
+## 注意
 
-- `config/`：各软件配置（nvim、tmux、yazi、karabiner、hammerspoon 等）
-- `zshrc` / `zprofile` / `gitconfig`：用户级基础配置
-- `ssh/config.example`：SSH 模板
-- `install.sh`：初始化安装与软链接脚本
+不要提交私钥、token、真实主机信息或机器本地缓存。新增配置前先看一眼 `.gitignore`。
