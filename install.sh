@@ -80,7 +80,6 @@ install_ubuntu_packages() {
   fi
 
   local apt_packages=(
-    zsh
     git
     curl
     wget
@@ -98,6 +97,7 @@ install_ubuntu_packages() {
     imagemagick
     eza
     neovim
+    snapd
     starship
     python3-virtualenv
   )
@@ -137,6 +137,49 @@ install_ubuntu_packages() {
   fi
 
   echo "  ✅ Ubuntu package installation complete."
+
+  install_ubuntu_yazi
+}
+
+
+install_ubuntu_yazi() {
+  echo -e "\n››› Installing Yazi for Ubuntu..."
+
+  if command -v yazi &> /dev/null || [ -x /snap/bin/yazi ]; then
+    echo "  Yazi already installed. Skipping."
+    return 0
+  fi
+
+  local sudo_cmd=()
+  if [ "$EUID" -ne 0 ]; then
+    if command -v sudo &> /dev/null; then
+      sudo_cmd=(sudo)
+    else
+      echo "  sudo not found and not running as root. Cannot install Yazi."
+      return 1
+    fi
+  fi
+
+  if apt-cache show yazi &> /dev/null; then
+    "${sudo_cmd[@]}" apt-get install -y yazi
+  fi
+
+  if command -v yazi &> /dev/null || [ -x /snap/bin/yazi ]; then
+    echo "  ✅ Yazi installation complete."
+    return 0
+  fi
+
+  if command -v snap &> /dev/null; then
+    "${sudo_cmd[@]}" snap install yazi --classic || true
+  fi
+
+  if command -v yazi &> /dev/null || [ -x /snap/bin/yazi ]; then
+    echo "  ✅ Yazi installation complete."
+    return 0
+  fi
+
+  echo "  Yazi was not installed. Install it manually, then rerun bash install.sh."
+  return 1
 }
 
 
@@ -178,6 +221,18 @@ install_zimfw() {
 link_dotfiles() {
   echo -e "\n››› Symlinking dotfiles from $DOTFILES_DIR..."
 
+  backup_path() {
+      local path="$1"
+      local backup_path="$path.bak"
+
+      if [ -e "$backup_path" ] || [ -L "$backup_path" ]; then
+          backup_path="$path.bak.$(date +%Y%m%d%H%M%S)"
+      fi
+
+      echo "    Backing up existing $path to $backup_path"
+      mv "$path" "$backup_path"
+  }
+
   link_path() {
       local src_path="$1"
       local dest_path="$2"
@@ -190,17 +245,29 @@ link_dotfiles() {
       mkdir -p "$(dirname "$dest_path")"
 
       if [ -L "$dest_path" ]; then
-          echo "    Symlink already exists for $dest_path. Skipping."
-          return
+          if [ "$(readlink "$dest_path")" = "$src_path" ]; then
+              echo "    Symlink already exists for $dest_path. Skipping."
+              return
+          fi
+          backup_path "$dest_path"
       fi
 
       if [ -e "$dest_path" ]; then
-          echo "    Backing up existing $dest_path to $dest_path.bak"
-          mv "$dest_path" "$dest_path.bak"
+          backup_path "$dest_path"
       fi
 
       ln -s "$src_path" "$dest_path"
       echo "    Linked $src_path -> $dest_path"
+  }
+
+  prepare_real_dir() {
+      local dest_dir="$1"
+
+      if [ -L "$dest_dir" ]; then
+          backup_path "$dest_dir"
+      fi
+
+      mkdir -p "$dest_dir"
   }
 
   should_link_linux_config() {
@@ -212,28 +279,51 @@ link_dotfiles() {
           nvim) command -v nvim &> /dev/null ;;
           starship.toml) command -v starship &> /dev/null ;;
           tmux) command -v tmux &> /dev/null ;;
-          zim|zsh) command -v zsh &> /dev/null ;;
-          yazi) command -v yazi &> /dev/null ;;
+          yazi) command -v yazi &> /dev/null || [ -x /snap/bin/yazi ] ;;
           *) return 1 ;;
       esac
   }
 
+  ensure_bashrc_source() {
+      local source_line='[ -f "$HOME/.config/dotfiles-ubuntu-bash.sh" ] && source "$HOME/.config/dotfiles-ubuntu-bash.sh"'
+      local bashrc="$HOME/.bashrc"
+
+      touch "$bashrc"
+      if grep -Fq "$source_line" "$bashrc"; then
+          echo "    ~/.bashrc already sources Ubuntu bash profile. Skipping."
+      else
+          printf '\n# Dotfiles Ubuntu bash profile\n%s\n' "$source_line" >> "$bashrc"
+          echo "    Added Ubuntu bash profile source to ~/.bashrc"
+      fi
+  }
+
   link_ubuntu_yazi_profile() {
       local yazi_dest_dir="$HOME/.config/yazi"
-      mkdir -p "$yazi_dest_dir"
+      prepare_real_dir "$yazi_dest_dir"
       link_path "$DOTFILES_DIR/profiles/yazi-ubuntu/yazi.toml" "$yazi_dest_dir/yazi.toml"
       link_path "$DOTFILES_DIR/profiles/yazi-ubuntu/shell.snippet.sh" "$HOME/.config/yazi-ubuntu-shell.sh"
+  }
+
+  link_ubuntu_bash_profile() {
+      link_path "$DOTFILES_DIR/profiles/ubuntu-bash/bashrc.snippet.sh" "$HOME/.config/dotfiles-ubuntu-bash.sh"
+      ensure_bashrc_source
+  }
+
+  link_ubuntu_tmux_profile() {
+      local tmux_dest_dir="$HOME/.config/tmux"
+      prepare_real_dir "$tmux_dest_dir"
+      link_path "$DOTFILES_DIR/profiles/tmux-ubuntu/tmux.conf" "$tmux_dest_dir/tmux.conf"
   }
 
   # --- 1. 链接 Home 根目录下的文件 ---
   # 格式: "仓库中的文件名;目标链接路径"
   local root_files=(
-      "zshrc;~/.zshrc"
-      "zprofile;~/.zprofile"
       "gitconfig;~/.gitconfig"
   )
 
   if is_macos; then
+      root_files+=("zshrc;~/.zshrc")
+      root_files+=("zprofile;~/.zprofile")
       root_files+=("config/hammerspoon;~/.hammerspoon")
   fi
 
@@ -256,6 +346,15 @@ link_dotfiles() {
       local src_path="$item"
       local dest_path="$CONFIG_DEST_DIR/$item_name"
 
+      if is_linux && [ "$item_name" = "tmux" ]; then
+          if should_link_linux_config "$item_name"; then
+              link_ubuntu_tmux_profile
+          else
+              echo "    tmux not found. Skipping Ubuntu tmux profile."
+          fi
+          continue
+      fi
+
       if is_linux && [ "$item_name" = "yazi" ]; then
           if should_link_linux_config "$item_name"; then
               link_ubuntu_yazi_profile
@@ -272,6 +371,10 @@ link_dotfiles() {
 
       link_path "$src_path" "$dest_path"
   done
+
+  if is_linux; then
+      link_ubuntu_bash_profile
+  fi
   
   # --- 3. 仅部署 SSH 模板配置，不链接私钥文件 ---
   local SSH_TEMPLATE_PATH="$DOTFILES_DIR/ssh/config.example"
@@ -304,10 +407,12 @@ main() {
   
   # 推荐的执行顺序：先安装好工具和环境，再部署依赖这些工具的配置文件
   install_packages
-  install_zimfw
+  if is_macos; then
+    install_zimfw
+  fi
   link_dotfiles
 
-  echo -e "\n🎉 All tasks complete! Please restart your shell or run 'source ~/.zshrc' for all changes to take effect."
+  echo -e "\n🎉 All tasks complete! Please restart your shell or reload your shell config."
 }
 
 # --- 执行主函数 ---
