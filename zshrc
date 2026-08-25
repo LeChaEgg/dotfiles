@@ -14,6 +14,12 @@ export PYTHONWARNINGS="ignore:The parameter -j is used more than once:UserWarnin
 
 [ -d /opt/homebrew/opt/python@3.13/libexec/bin ] && export PATH="/opt/homebrew/opt/python@3.13/libexec/bin:$PATH"
 
+# Use one shared Python environment for small, ad-hoc scripts.
+# Keep an already-active project environment untouched.
+if [[ -z "${VIRTUAL_ENV:-}" && -f "$HOME/.global-env/bin/activate" ]]; then
+	source "$HOME/.global-env/bin/activate"
+fi
+
 [ -f "$HOME/.config/zsh/aliases" ] && source "$HOME/.config/zsh/aliases"
 [ -f "$HOME/.config/zsh/fzf.zsh" ] && source "$HOME/.config/zsh/fzf.zsh" 
 # 加载隐私环境变量 (仅在交互式模式下)

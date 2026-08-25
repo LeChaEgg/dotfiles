@@ -53,6 +53,7 @@ install_homebrew_packages() {
     starship
     rich-cli
     virtualenv
+    uv
   )
 
   # 定义需要安装的字体/应用列表 (Casks)

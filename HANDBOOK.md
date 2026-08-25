@@ -55,6 +55,7 @@
 - `zshrc`
   - 放交互式 shell 行为。
   - 会加载 alias、fzf、私有环境变量、Zim、Yazi wrapper、gcloud PATH 等。
+  - 如果没有其他虚拟环境，会自动加载 `~/.global-env`，用于日常 Python 小任务。
 - `config/zim/zimrc`
   - 管理 Zim 模块，比如 completion、autosuggestions、zoxide、starship。
 - `config/starship.toml`
@@ -99,6 +100,18 @@
 - 重载
   - `sz` = `source ~/.zshrc`
   - `reload` = `exec zsh`
+
+### 3.3 日常 Python 环境
+
+macOS 上用 `uv` 创建一次共享环境即可：
+
+```bash
+uv venv ~/.global-env
+source ~/.zshrc
+uv pip install <包名>
+```
+
+项目已有 `.venv` 时，`zshrc` 不会覆盖它。
 
 ### 3.3 日常建议
 
