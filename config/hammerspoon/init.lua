@@ -1,322 +1,214 @@
 local applicationWatcher = require("hs.application.watcher")
-local windowFilter = require("hs.window.filter")
 require("hs.ipc")
+
 local log = hs.logger.new("input-source", "info")
 local state = _G.inputSourceSwitcherState or {}
 _G.inputSourceSwitcherState = state
 
 local inputSources = {
-  abc = "com.apple.keylayout.ABC",
-  chinese = "com.apple.inputmethod.SCIM.ITABC",
-  japanese = "com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese",
+	abc = "com.apple.keylayout.ABC",
+	japanese = "com.apple.inputmethod.Kotoeri.RomajiTyping.Japanese",
 }
 
-local browserApps = {
-  ["app.zen-browser.zen"] = "Zen Browser",
-  ["com.apple.Safari"] = "Safari",
-  ["com.brave.Browser"] = "Brave Browser",
-  ["com.google.Chrome"] = "Google Chrome",
-  ["com.microsoft.edgemac"] = "Microsoft Edge",
-  ["company.thebrowser.Browser"] = "Arc",
-}
-
-local websiteInputSources = {
-  {
-    domains = { "bilibili.com" },
-    inputSourceID = inputSources.chinese,
-  },
-  {
-    domains = { "auctions.yahoo.co.jp" },
-    inputSourceID = inputSources.japanese,
-  },
+local forcedInputSources = {
+	["com.apple.Terminal"] = inputSources.abc,
+	["com.googlecode.iterm2"] = inputSources.abc,
+	["net.ankiweb.launcher"] = inputSources.japanese,
+	["net.ankiweb.anki"] = inputSources.japanese,
 }
 
 local macismCandidates = {
-  "/opt/homebrew/bin/macism",
-  "/usr/local/bin/macism",
+	"/opt/homebrew/bin/macism",
+	"/usr/local/bin/macism",
 }
-
-local appGroups = {
-  [inputSources.chinese] = {
-    "com.tencent.xinWeChat",
-    "com.larksuite.larkApp",
-  },
-  [inputSources.abc] = {
-    "app.zen-browser.zen",
-    "com.apple.Safari",
-    "com.brave.Browser",
-    "com.google.Chrome",
-    "com.microsoft.edgemac",
-    "company.thebrowser.Browser",
-    "com.mitchellh.ghostty",
-    "com.openai.chat",
-    "com.openai.codex",
-    "com.raycast.macos",
-    "com.anthropic.claudefordesktop",
-    "com.microsoft.VSCode",
-    "com.apple.Terminal",
-    "com.apple.finder",
-    "com.apple.mail",
-    "com.apple.Keynote",
-  },
-  [inputSources.japanese] = {
-    "net.ankiweb.launcher",
-  },
-}
-
-local appInputSources = {}
-
-for inputSourceID, bundleIDs in pairs(appGroups) do
-  for _, bundleID in ipairs(bundleIDs) do
-    appInputSources[bundleID] = inputSourceID
-  end
-end
-
-state.activeTasks = state.activeTasks or {}
-state.appInputSources = appInputSources
-state.lastInputSourceContextKey = nil
+local macismWaitMs = "150"
 
 local function resolveMacism()
-  for _, candidate in ipairs(macismCandidates) do
-    local attributes = hs.fs.attributes(candidate)
-    if attributes and attributes.mode == "file" then
-      return candidate
-    end
-  end
-
-  return nil
+	for _, candidate in ipairs(macismCandidates) do
+		local attributes = hs.fs.attributes(candidate)
+		if attributes and attributes.mode == "file" then
+			return candidate
+		end
+	end
+	return nil
 end
 
 local macismBin = resolveMacism()
-local switchInputSource
+state.appLastInputSources = state.appLastInputSources or hs.settings.get("inputSourceSwitcher.appLastInputSources") or {}
+state.activeTasks = state.activeTasks or {}
 
-local function normalizeURLHost(url)
-  if not url or url == "" then
-    return nil
-  end
+local function rememberInputSource(bundleID, inputSourceID)
+	if not bundleID or not inputSourceID or forcedInputSources[bundleID] then
+		return
+	end
 
-  local host = url:match("^[%w+.-]+://([^/?#]+)") or url:match("^([^/?#]+)")
-  if not host then
-    return nil
-  end
-
-  host = host:lower():gsub(":.*$", ""):gsub("^www%.", "")
-  if host == "" or host == "about:blank" then
-    return nil
-  end
-
-  return host
+	state.appLastInputSources[bundleID] = inputSourceID
+	hs.settings.set("inputSourceSwitcher.appLastInputSources", state.appLastInputSources)
 end
 
-local function hostMatchesDomain(host, domain)
-  return host == domain or host:sub(-(domain:len() + 1)) == "." .. domain
+local scheduleCurrentAppSync
+local startQueuedInputSourceSwitch
+
+local function suppressProgrammaticInputSourceEvents()
+	state.ignoreInputSourceEvents = true
+	if state.programmaticSourceTimer then
+		state.programmaticSourceTimer:stop()
+	end
+	state.programmaticSourceTimer = hs.timer.doAfter(0.75, function()
+		state.ignoreInputSourceEvents = false
+		state.programmaticSourceTimer = nil
+	end)
 end
 
-local function inputSourceForURL(url)
-  local host = normalizeURLHost(url)
-  if not host then
-    return nil
-  end
+local function queueInputSourceSwitch(inputSourceID)
+	if not macismBin then
+		log.e("macism not found in expected locations")
+		return
+	end
 
-  for _, rule in ipairs(websiteInputSources) do
-    for _, domain in ipairs(rule.domains) do
-      if hostMatchesDomain(host, domain) then
-        return rule.inputSourceID, host
-      end
-    end
-  end
-
-  return inputSources.abc, host
+	state.queuedInputSourceID = inputSourceID
+	startQueuedInputSourceSwitch()
 end
 
-local function runAppleScript(script)
-  local ok, result = hs.osascript.applescript(script)
-  if ok and result and result ~= "" then
-    return result
-  end
+startQueuedInputSourceSwitch = function()
+	if state.activeSwitchTask then
+		return
+	end
 
-  return nil
-end
+	local inputSourceID = state.queuedInputSourceID
+	state.queuedInputSourceID = nil
+	if not inputSourceID or hs.keycodes.currentSourceID() == inputSourceID then
+		return
+	end
 
-local function frontmostBrowserURL(appName)
-  if appName == "Safari" then
-    return runAppleScript([[
-      tell application "Safari"
-        if not (exists front window) then return ""
-        return URL of current tab of front window
-      end tell
-    ]])
-  end
+	local task
+	suppressProgrammaticInputSourceEvents()
+	task = hs.task.new(macismBin, function(exitCode, stdOut, stdErr)
+		if state.activeSwitchTask == task then
+			state.activeSwitchTask = nil
+		end
+		state.activeTasks[task] = nil
+		suppressProgrammaticInputSourceEvents()
 
-  return runAppleScript(string.format([[
-    tell application "%s"
-      if not (exists front window) then return ""
-      return URL of active tab of front window
-    end tell
-  ]], appName))
-end
+		if exitCode == 0 then
+			log.i(string.format("switched to %s", inputSourceID))
+		else
+			log.e(string.format(
+				"macism failed for %s (exit=%d, stdout=%s, stderr=%s)",
+				inputSourceID,
+				exitCode,
+				stdOut or "",
+				stdErr or ""
+			))
+		end
 
-local function syncInputSourceForBrowser(app)
-  local bundleID = app and app:bundleID()
-  local appName = bundleID and browserApps[bundleID]
-  if not appName then
-    return false
-  end
+		startQueuedInputSourceSwitch()
+		if scheduleCurrentAppSync then
+			scheduleCurrentAppSync()
+		end
+	end, { inputSourceID, macismWaitMs })
 
-  local url = frontmostBrowserURL(appName)
-  local inputSourceID, host = inputSourceForURL(url)
-  if not inputSourceID then
-    inputSourceID = inputSources.abc
-  end
+	if not task then
+		log.e("failed to create macism task")
+		return
+	end
 
-  local contextKey = string.format("browser:%s:%s", bundleID, host or "<unknown>")
-  if state.lastInputSourceContextKey == contextKey then
-    return true
-  end
-
-  state.lastInputSourceContextKey = contextKey
-  if hs.keycodes.currentSourceID() == inputSourceID then
-    return true
-  end
-
-  log.i(string.format("browser %s host %s -> %s", bundleID, host or "<unknown>", inputSourceID))
-  switchInputSource(inputSourceID)
-  return true
-end
-
-switchInputSource = function(inputSourceID)
-  if not macismBin then
-    log.e("macism not found in expected locations")
-    return
-  end
-
-  local currentSourceID = hs.keycodes.currentSourceID()
-  if currentSourceID == inputSourceID then
-    log.i(string.format("skip switch, already on %s", inputSourceID))
-    return
-  end
-
-  local task
-  task = hs.task.new(macismBin, function(exitCode, stdOut, stdErr)
-    state.activeTasks[task] = nil
-
-    if exitCode == 0 then
-      log.i(string.format("switched to %s", inputSourceID))
-      return
-    end
-
-    log.e(string.format(
-      "macism failed for %s (exit=%d, stdout=%s, stderr=%s)",
-      inputSourceID,
-      exitCode,
-      stdOut or "",
-      stdErr or ""
-    ))
-  end, { inputSourceID })
-
-  if not task then
-    log.e("failed to create macism task")
-    return
-  end
-
-  state.activeTasks[task] = true
-  if not task:start() then
-    state.activeTasks[task] = nil
-    log.e("failed to start macism task")
-  end
+	state.activeSwitchTask = task
+	state.activeTasks[task] = true
+	if not task:start() then
+		state.activeSwitchTask = nil
+		state.activeTasks[task] = nil
+		log.e("failed to start macism task")
+	end
 end
 
 local function syncInputSourceForApp(app)
-  if not app then
-    return
-  end
+	if not app then
+		return
+	end
 
-  local bundleID = app:bundleID()
-  if syncInputSourceForBrowser(app) then
-    return
-  end
+	local bundleID = app:bundleID()
+	if not bundleID or state.lastHandledBundleID == bundleID then
+		return
+	end
+	state.lastHandledBundleID = bundleID
 
-  local inputSourceID = bundleID and appInputSources[bundleID]
-  if not inputSourceID then
-    log.i(string.format("no mapped input source for %s", bundleID or "<nil>"))
-    return
-  end
+	local inputSourceID = forcedInputSources[bundleID]
+	if inputSourceID then
+		log.i(string.format("app %s -> forced %s", bundleID, inputSourceID))
+		queueInputSourceSwitch(inputSourceID)
+		return
+	end
 
-  local contextKey = string.format("app:%s", bundleID)
-  if state.lastInputSourceContextKey == contextKey then
-    return
-  end
-
-  state.lastInputSourceContextKey = contextKey
-  log.i(string.format("app %s -> %s", bundleID, inputSourceID))
-  switchInputSource(inputSourceID)
+	inputSourceID = state.appLastInputSources[bundleID]
+	if inputSourceID then
+		log.i(string.format("app %s -> remembered %s", bundleID, inputSourceID))
+		queueInputSourceSwitch(inputSourceID)
+	else
+		rememberInputSource(bundleID, hs.keycodes.currentSourceID())
+		log.i(string.format("app %s -> keeping current input source", bundleID))
+	end
 end
 
-local function syncInputSourceForWindow(window)
-  if not window then
-    return
-  end
+scheduleCurrentAppSync = function()
+	-- macOS can change a document's input source as part of app activation.
+	-- Ignore that event before it can overwrite the app's remembered source.
+	suppressProgrammaticInputSourceEvents()
 
-  syncInputSourceForApp(window:application())
+	if state.appActivationTimer then
+		state.appActivationTimer:stop()
+	end
+
+	state.appActivationTimer = hs.timer.doAfter(0.15, function()
+		state.appActivationTimer = nil
+		state.lastHandledBundleID = nil
+		syncInputSourceForApp(hs.application.frontmostApplication())
+	end)
 end
 
 if state.watcher then
-  state.watcher:stop()
-  state.watcher = nil
+	state.watcher:stop()
+	state.watcher = nil
 end
 
-if state.windowFilter then
-  state.windowFilter:unsubscribeAll()
-  state.windowFilter = nil
+if state.appActivationTimer then
+	state.appActivationTimer:stop()
+	state.appActivationTimer = nil
 end
 
-if state.ghosttyWindowFilter then
-  state.ghosttyWindowFilter:unsubscribeAll()
-  state.ghosttyWindowFilter = nil
+if state.programmaticSourceTimer then
+	state.programmaticSourceTimer:stop()
+	state.programmaticSourceTimer = nil
 end
+state.ignoreInputSourceEvents = false
 
-if state.browserURLTimer then
-  state.browserURLTimer:stop()
-  state.browserURLTimer = nil
+for task in pairs(state.activeTasks) do
+	task:terminate()
 end
+state.activeTasks = {}
+state.activeSwitchTask = nil
+state.queuedInputSourceID = nil
 
 state.watcher = applicationWatcher.new(function(_, eventType, app)
-  if eventType ~= applicationWatcher.activated then
-    return
-  end
-
-  syncInputSourceForApp(app)
+	if eventType == applicationWatcher.activated then
+		scheduleCurrentAppSync()
+	end
 end)
-
 state.watcher:start()
 
-state.windowFilter = windowFilter.new()
-state.windowFilter:subscribe(windowFilter.windowFocused, function(window)
-  syncInputSourceForWindow(window)
+hs.keycodes.inputSourceChanged(function()
+	if state.activeSwitchTask or state.ignoreInputSourceEvents then
+		return
+	end
+
+	local inputSourceID = hs.keycodes.currentSourceID()
+	local app = hs.application.frontmostApplication()
+	local bundleID = app and app:bundleID()
+	if bundleID and not forcedInputSources[bundleID] then
+		rememberInputSource(bundleID, inputSourceID)
+	end
 end)
 
-state.ghosttyWindowFilter = windowFilter
-  .new(false)
-  :setAppFilter("Ghostty", {
-    visible = true,
-    allowRoles = "*",
-  })
-
-state.ghosttyWindowFilter:subscribe({
-  windowFilter.windowCreated,
-  windowFilter.windowFocused,
-  windowFilter.windowVisible,
-}, function(window)
-  syncInputSourceForWindow(window)
-end)
-
-state.browserURLTimer = hs.timer.doEvery(1, function()
-  syncInputSourceForBrowser(hs.application.frontmostApplication())
-end)
-
-log.i("input source watcher started")
-
-syncInputSourceForWindow(hs.window.focusedWindow())
-syncInputSourceForApp(hs.application.frontmostApplication())
-
+log.i("per-app input source watcher started")
+scheduleCurrentAppSync()
 hs.alert.show("Input source watcher loaded")
