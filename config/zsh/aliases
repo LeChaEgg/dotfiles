@@ -28,7 +28,6 @@ alias tmv='tmux rename-session -t'
 alias tk='tmux kill-session -t'
 
 # navigation
-alias zz='z -'
 alias cf='cd ~/dotfiles/'
 alias ..='cd ..'
 alias ...='cd ../..'
@@ -59,8 +58,5 @@ alias vt="nvim ~/.config/tmux/tmux.conf"
 alias sz='source ~/.zshrc'
 alias sf='source ./.venv/bin/activate'
 alias reload='exec zsh'
-
-# freqtrade
-alias freqtrade='docker compose run --rm freqtrade'
 
 [ -f "$HOME/.config/zsh/aliases.local" ] && source "$HOME/.config/zsh/aliases.local"

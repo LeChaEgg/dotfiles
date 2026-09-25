@@ -37,15 +37,12 @@ install_homebrew_packages() {
 
   # 定义需要安装的软件包列表
   local brew_packages=(
-    yazi
     ffmpeg
     sevenzip
     jq
     poppler
     fd
     ripgrep
-    fzf
-    zoxide
     resvg
     imagemagick
     eza
@@ -92,8 +89,6 @@ install_ubuntu_packages() {
     poppler-utils
     fd-find
     ripgrep
-    fzf
-    zoxide
     librsvg2-bin
     imagemagick
     eza
@@ -139,48 +134,6 @@ install_ubuntu_packages() {
 
   echo "  ✅ Ubuntu package installation complete."
 
-  install_ubuntu_yazi
-}
-
-
-install_ubuntu_yazi() {
-  echo -e "\n››› Installing Yazi for Ubuntu..."
-
-  if command -v yazi &> /dev/null || [ -x /snap/bin/yazi ]; then
-    echo "  Yazi already installed. Skipping."
-    return 0
-  fi
-
-  local sudo_cmd=()
-  if [ "$EUID" -ne 0 ]; then
-    if command -v sudo &> /dev/null; then
-      sudo_cmd=(sudo)
-    else
-      echo "  sudo not found and not running as root. Cannot install Yazi."
-      return 1
-    fi
-  fi
-
-  if apt-cache show yazi &> /dev/null; then
-    "${sudo_cmd[@]}" apt-get install -y yazi
-  fi
-
-  if command -v yazi &> /dev/null || [ -x /snap/bin/yazi ]; then
-    echo "  ✅ Yazi installation complete."
-    return 0
-  fi
-
-  if command -v snap &> /dev/null; then
-    "${sudo_cmd[@]}" snap install yazi --classic || true
-  fi
-
-  if command -v yazi &> /dev/null || [ -x /snap/bin/yazi ]; then
-    echo "  ✅ Yazi installation complete."
-    return 0
-  fi
-
-  echo "  Yazi was not installed. Install it manually, then rerun bash install.sh."
-  return 1
 }
 
 
@@ -191,26 +144,6 @@ install_packages() {
     install_ubuntu_packages
   else
     echo -e "\n››› Unsupported OS '$OS_NAME'. Skipping package installation."
-  fi
-}
-
-
-# --- 安装 Zim Zsh Framework ---
-install_zimfw() {
-  echo -e "\n››› Installing Zim Zsh Framework..."
-
-  if ! command -v zsh &> /dev/null; then
-    echo "  zsh not found. Skipping Zim installation."
-    return 0
-  fi
-
-  # 检查 Zim 是否已安装，避免重复执行
-  if [ -d "${ZIM_HOME:-$HOME/.zim}" ]; then
-    echo "  Zim Framework already installed. Skipping."
-  else
-    echo "  Downloading and running Zim installer..."
-    curl -fsSL https://raw.githubusercontent.com/zimfw/install/master/install.zsh | zsh
-    echo "  ✅ Zim installation complete."
   fi
 }
 
@@ -280,7 +213,6 @@ link_dotfiles() {
           nvim) command -v nvim &> /dev/null ;;
           starship.toml) command -v starship &> /dev/null ;;
           tmux) command -v tmux &> /dev/null ;;
-          yazi) command -v yazi &> /dev/null || [ -x /snap/bin/yazi ] ;;
           *) return 1 ;;
       esac
   }
@@ -296,13 +228,6 @@ link_dotfiles() {
           printf '\n# Dotfiles Ubuntu bash profile\n%s\n' "$source_line" >> "$bashrc"
           echo "    Added Ubuntu bash profile source to ~/.bashrc"
       fi
-  }
-
-  link_ubuntu_yazi_profile() {
-      local yazi_dest_dir="$HOME/.config/yazi"
-      prepare_real_dir "$yazi_dest_dir"
-      link_path "$DOTFILES_DIR/profiles/yazi-ubuntu/yazi.toml" "$yazi_dest_dir/yazi.toml"
-      link_path "$DOTFILES_DIR/profiles/yazi-ubuntu/shell.snippet.sh" "$HOME/.config/yazi-ubuntu-shell.sh"
   }
 
   link_ubuntu_bash_profile() {
@@ -357,15 +282,6 @@ link_dotfiles() {
           continue
       fi
 
-      if is_linux && [ "$item_name" = "yazi" ]; then
-          if should_link_linux_config "$item_name"; then
-              link_ubuntu_yazi_profile
-          else
-              echo "    yazi not found. Skipping Ubuntu Yazi profile."
-          fi
-          continue
-      fi
-
       if is_linux && ! should_link_linux_config "$item_name"; then
           echo "    $item_name not available or not Linux-safe. Skipping."
           continue
@@ -409,9 +325,6 @@ main() {
   
   # 推荐的执行顺序：先安装好工具和环境，再部署依赖这些工具的配置文件
   install_packages
-  if is_macos; then
-    install_zimfw
-  fi
   link_dotfiles
 
   echo -e "\n🎉 All tasks complete! Please restart your shell or reload your shell config."

@@ -22,8 +22,7 @@
 2. interactive zsh 再读 `zshrc`
 3. `zshrc` 继续加载：
    - `config/zsh/aliases`
-   - `config/zsh/fzf.zsh`
-   - `config/zim/zimrc`
+   - `config/zsh/plugins.zsh`
    - `config/starship.toml`
 
 ## 2. 软件总览
@@ -31,13 +30,10 @@
 | 软件 | 主要用途 | 主要配置文件 | 你最常会改什么 |
 | --- | --- | --- | --- |
 | Zsh | shell 本体 | `zshrc`, `zprofile` | 环境变量、启动加载顺序 |
-| Zim | zsh 插件管理 | `config/zim/zimrc` | autosuggestion、completion、zoxide、starship |
 | Starship | prompt | `config/starship.toml` | 提示符显示内容 |
 | Aliases | 命令别名 | `config/zsh/aliases` | 日常快捷命令 |
-| fzf | 模糊搜索/补全 | `config/zsh/fzf.zsh` | 搜索体验 |
 | tmux | 终端分屏/会话管理 | `config/tmux/tmux.conf` | 分屏、切 pane、窗口管理 |
 | Neovim | 编辑器 | `config/nvim/` | 快捷键、插件、LSP |
-| Yazi | 终端文件管理器 | `config/yazi/` | 键位、预览器、插件 |
 | gh | GitHub CLI | `config/gh/config.yml` | gh aliases |
 | Git | Git 用户级设置 | `gitconfig` | 用户名、邮箱、默认编辑器 |
 | Ghostty | 第三方终端 | `config/ghostty/config` | 字体、快速终端、标题栏 |
@@ -46,18 +42,18 @@
 | btop | 系统监控 | `config/btop/btop.conf` | 界面布局、颜色、采样行为 |
 | SSH | SSH 模板 | `ssh/config.example` | Host 模板、代理、认证方式 |
 
-## 3. Shell：Zsh / Zim / Starship / Aliases
+## 3. Shell：Zsh / Starship / Aliases
 
 ### 3.1 入口文件怎么分工
 
 - `zprofile`
-  - 放 login shell 环境准备，例如 Homebrew、OrbStack、pipx PATH。
+  - 放 login shell 环境准备，例如 Homebrew、pipx PATH。
 - `zshrc`
   - 放交互式 shell 行为。
-  - 会加载 alias、fzf、私有环境变量、Zim、Yazi wrapper、gcloud PATH 等。
+  - 会加载 alias、私有环境变量和 repo 内保留的 Zsh 插件。
   - 如果没有其他虚拟环境，会自动加载 `~/.global-env`，用于日常 Python 小任务。
-- `config/zim/zimrc`
-  - 管理 Zim 模块，比如 completion、autosuggestions、zoxide、starship。
+- `config/zsh/plugins.zsh`
+  - 加载补全、autosuggestions、历史搜索和语法高亮插件。
 - `config/starship.toml`
   - 管 prompt 外观。
 
@@ -219,76 +215,23 @@ Neovim 配置集中在 `config/nvim/`。
 - `<leader>sg` 全局 grep
 - `<leader><leader>` 查 buffer
 
-## 6. Yazi 速查
+## 6. Git / gh / SSH
 
-Yazi 是你的终端文件管理器，配置在 `config/yazi/`。
-
-如果是 Ubuntu 服务器，不要直接照搬 `config/yazi/`；仓库里单独提供了一份更保守的服务器版 profile：`profiles/yazi-ubuntu/`。
-
-### 6.1 最重要的启动方式
-
-不要只记 `yazi`，更推荐记 `y`。
-
-在 `zshrc` 里定义了一个 `y()` 函数，它会在你退出 Yazi 后把 shell 当前目录同步到你最后停留的目录。也就是说：
-
-- `y`
-  - 打开 Yazi
-  - 退出后 shell 会自动 `cd` 到你刚才浏览的位置
-
-### 6.2 当前配置特点
-
-- 默认显示隐藏文件
-- 目录优先排序
-- 按修改时间逆序
-- 预览面板比例偏大
-- Markdown / Python / JSON / CSV / Notebook 预览用了 `rich`
-- 目录预览用了 `eza-preview`
-- 集成了 Git 状态、书签、项目、相对跳转、starship
-
-### 6.3 自定义快捷键
-
-| 动作 | 快捷键 |
-| --- | --- |
-| 目录树/列表预览开关 | `E` |
-| 增加/减少树深度 | `-` / `_` |
-| 预览里显示/隐藏隐藏文件 | `*` |
-| 预览里切换是否跟随软链接 | `$` |
-| 智能进入目录或打开文件 | `l` |
-| 在当前目录开 shell | `!` |
-| 跳到字符 | `f` |
-| 智能过滤 | `F` |
-| 保存书签 | `m` |
-| 跳到书签 | `'` |
-| 删除书签 | `b d` |
-| 保存项目 | `P s` |
-| 加载项目 | `P l` |
-| 加载上次项目 | `P P` |
-| 删除项目 | `P d` |
-| 1 到 9 相对跳转 | `1` 到 `9` |
-
-### 6.4 忘了以后看哪里
-
-- 键位：`config/yazi/keymap.toml`
-- 插件初始化：`config/yazi/init.lua`
-- 预览器/打开器：`config/yazi/yazi.toml`
-
-## 7. Git / gh / SSH
-
-### 7.1 Git
+### 6.1 Git
 
 `gitconfig` 目前比较轻，只做了两件事：
 
 - 设置用户信息
 - 设置默认编辑器为 `nvim`
 
-### 7.2 GitHub CLI
+### 6.2 GitHub CLI
 
 `config/gh/config.yml` 目前只有一个 alias：
 
 - `gh co`
   - 等价于 `gh pr checkout`
 
-### 7.3 SSH
+### 6.3 SSH
 
 `ssh/config.example` 是模板，不是最终线上配置。
 
@@ -301,11 +244,11 @@ Yazi 是你的终端文件管理器，配置在 `config/yazi/`。
    - Cloudflare tunnel 示例
    - Host 模板结构
 
-## 8. Ghostty / Karabiner / btop
+## 7. Ghostty / Karabiner / btop
 
 这几项不是每天必改，但属于“改了以后效果很明显”的配置。
 
-### 8.1 Ghostty
+### 7.1 Ghostty
 
 `config/ghostty/config` 主要做了这些事：
 
@@ -318,7 +261,7 @@ Yazi 是你的终端文件管理器，配置在 `config/yazi/`。
 
 如果你平时主要用系统 Terminal，这部分可以先忽略。
 
-### 8.2 Karabiner
+### 7.2 Karabiner
 
 `config/karabiner/karabiner.json` 和 `assets/complex_modifications/` 里能看出当前主要在做：
 
@@ -333,7 +276,7 @@ Yazi 是你的终端文件管理器，配置在 `config/yazi/`。
 - `config/karabiner/karabiner.json`
 - `config/karabiner/assets/complex_modifications/`
 
-### 8.3 btop
+### 7.3 btop
 
 `config/btop/btop.conf` 主要是界面与显示偏好：
 
@@ -345,7 +288,7 @@ Yazi 是你的终端文件管理器，配置在 `config/yazi/`。
 
 这个配置偏“开箱即用”，一般不需要高频修改。
 
-## 9. 依赖与常见坑
+## 8. 依赖与常见坑
 
 `install.sh` 会安装一批常用工具，但不是所有配置依赖都自动安装了。
 
@@ -364,18 +307,17 @@ Yazi 是你的终端文件管理器，配置在 `config/yazi/`。
 
 如果你发现 alias 存在但命令不可用，先检查是不是工具本体没安装。
 
-## 10. 忘了时的最短路径
+## 9. 忘了时的最短路径
 
 如果你只是忘了某个操作，不想翻完整文档，可以按下面顺序找：
 
 1. Shell/命令问题：看 `config/zsh/aliases`
 2. 分屏/会话问题：看 `config/tmux/tmux.conf`
 3. 编辑器快捷键：看 `config/nvim/lua/custom/keymaps.lua`
-4. 文件管理快捷键：看 `config/yazi/keymap.toml`
-5. 键盘改键：看 `config/karabiner/karabiner.json`
-6. 不确定入口文件：回来看本手册第 2 节的软件总览
+4. 键盘改键：看 `config/karabiner/karabiner.json`
+5. 不确定入口文件：回来看本手册第 2 节的软件总览
 
-## 11. 建议的后续维护方式
+## 10. 建议的后续维护方式
 
 为了避免以后又忘，建议继续按下面的方式维护：
 

@@ -4,9 +4,6 @@
 # - key first:      PreferredAuthentications publickey,password
 # - password first: PreferredAuthentications password,publickey
 
-# Optional: OrbStack integration (keep this near the top if used).
-Include ~/.orbstack/ssh/config
-
 # Global defaults
 Host *
   PreferredAuthentications publickey,password

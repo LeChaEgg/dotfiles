@@ -27,11 +27,10 @@ source ~/.bashrc
 ## 脚本会做什么
 
 - macOS：用 Homebrew 安装常用 CLI 工具和字体
-- Ubuntu：用 `apt` 安装常用工具；Yazi 会额外尝试 `apt` 和 Snap
+- Ubuntu：用 `apt` 安装常用工具
 - macOS：链接 `zshrc`、`zprofile`、Hammerspoon、Karabiner 等配置
 - Ubuntu：不安装 Zsh，不切换默认 shell，只给 bash 加一份轻量 alias
 - 链接可用的 `~/.config/*` 配置；不可用的软件直接跳过
-- Ubuntu 的 Yazi 使用 `profiles/yazi-ubuntu/` 精简配置
 - Ubuntu 的 tmux 使用 `profiles/tmux-ubuntu/` 精简配置
 - macOS 默认使用 `~/.global-env` 作为日常 Python 虚拟环境（需先创建）
 - `~/.ssh/config` 只在不存在时从模板复制，不链接私钥
@@ -51,10 +50,9 @@ git push
 
 ## 目录
 
-- `config/`：macOS 主配置，包含 nvim、tmux、yazi、zsh、starship 等
+- `config/`：macOS 主配置，包含 nvim、tmux、zsh、starship 等
 - `profiles/ubuntu-bash/`：Ubuntu bash alias 和工具初始化
 - `profiles/tmux-ubuntu/`：Ubuntu tmux 配置
-- `profiles/yazi-ubuntu/`：Ubuntu/服务器用的 Yazi 配置
 - `ssh/config.example`：SSH 配置模板
 - `install.sh`：安装和软链接脚本
 - `HANDBOOK.md`：更细的使用说明和快捷键索引
