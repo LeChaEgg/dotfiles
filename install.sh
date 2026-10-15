@@ -24,15 +24,102 @@ is_linux() {
 # 软件安装函数 (Software Installation Functions)
 # ==============================================================================
 
+# --- 记录失败的步骤，最后统一汇总 ---
+FAILED_STEPS=()
+
+# 运行一个步骤；失败只记录，不中断后面的步骤
+run_step() {
+  local label="$1"
+  shift
+  if ! "$@"; then
+    FAILED_STEPS+=("$label")
+  fi
+}
+
+# --- 让 sudo 在整个安装过程中保持有效（只问一次密码）---
+SUDO_KEEPALIVE_PID=""
+start_sudo_keepalive() {
+  if [ ! -t 0 ] || ! command -v sudo &> /dev/null; then
+    return 0
+  fi
+
+  echo "››› Some steps need administrator access. You may be asked for your password once."
+  if ! sudo -v; then
+    echo "  sudo unavailable; steps that need it will be skipped."
+    return 0
+  fi
+
+  ( while true; do sudo -n true 2> /dev/null || exit; sleep 50; done ) &
+  SUDO_KEEPALIVE_PID=$!
+  trap 'stop_sudo_keepalive' EXIT
+}
+
+stop_sudo_keepalive() {
+  if [ -n "$SUDO_KEEPALIVE_PID" ]; then
+    kill "$SUDO_KEEPALIVE_PID" &> /dev/null || true
+    SUDO_KEEPALIVE_PID=""
+  fi
+}
+
+# --- macOS: Xcode Command Line Tools（git / clang 等，Homebrew 依赖它）---
+ensure_xcode_clt() {
+  if xcode-select -p &> /dev/null; then
+    return 0
+  fi
+
+  echo -e "\n››› Installing Xcode Command Line Tools..."
+  # 通过 softwareupdate 无交互安装，避免弹出 GUI 窗口
+  local marker="/tmp/.com.apple.dt.CommandLineTools.installondemand.in-progress"
+  touch "$marker"
+  local label
+  label="$(softwareupdate -l 2> /dev/null | grep -E '^\* Label: Command Line Tools' | sed 's/^\* Label: //' | sort -V | tail -n 1)"
+  if [ -n "$label" ]; then
+    sudo softwareupdate -i "$label" --verbose
+  fi
+  rm -f "$marker"
+
+  if ! xcode-select -p &> /dev/null; then
+    echo "  Falling back to the GUI installer. Finish it, then re-run this script."
+    xcode-select --install
+    return 1
+  fi
+}
+
+# --- macOS: Homebrew 本体 ---
+load_homebrew_env() {
+  local brew_bin
+  for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+    if [ -x "$brew_bin" ]; then
+      eval "$("$brew_bin" shellenv)"
+      return 0
+    fi
+  done
+  return 1
+}
+
+ensure_homebrew() {
+  load_homebrew_env || true
+  if command -v brew &> /dev/null; then
+    return 0
+  fi
+
+  echo -e "\n››› Installing Homebrew..."
+  if ! NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+    echo "  ❌ Homebrew installation failed."
+    return 1
+  fi
+
+  load_homebrew_env
+}
+
+
 # --- 安装 Homebrew 软件包和字体 ---
 install_homebrew_packages() {
   echo -e "\n››› Installing Homebrew packages..."
 
-  # 检查 Homebrew 是否已安装
-  if ! command -v brew &> /dev/null; then
-    echo "  Homebrew not found. Please install it first by running:"
-    echo '  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-    return 1 # 返回错误，中止函数
+  if ! ensure_homebrew; then
+    echo "  Homebrew is unavailable. Skipping package installation."
+    return 1
   fi
 
   if ! brew bundle --help &> /dev/null; then
@@ -46,7 +133,8 @@ install_homebrew_packages() {
     return 1
   fi
 
-  if grep -Eq '^[[:space:]]*tap "abue-ammar/tinycast"' "$brewfile"; then
+  # 较新的 Homebrew 需要先信任第三方 tap；旧版本没有 `brew trust`，直接跳过
+  if grep -Eq '^[[:space:]]*tap "abue-ammar/tinycast"' "$brewfile" && brew trust --help &> /dev/null; then
     echo "  Trusting the Tinycast Homebrew tap..."
     if ! brew trust --tap abue-ammar/tinycast; then
       echo "  ❌ Could not trust the Tinycast Homebrew tap."
@@ -249,9 +337,26 @@ link_dotfiles() {
       echo "    Applied tracked Vorssaint preferences."
   }
 
+  install_iterm2_config() {
+      local settings_script="$DOTFILES_DIR/macos/iterm2/apply-settings.sh"
+
+      if [ ! -x "$settings_script" ]; then
+          return
+      fi
+
+      if pgrep -x "iTerm2" &> /dev/null; then
+          echo "    iTerm2 is running; skipped preference sync. Re-run from another terminal after quitting it."
+          return
+      fi
+
+      "$settings_script"
+      echo "    Applied tracked iTerm2 preferences."
+  }
+
   install_macos_app_configs() {
       install_tinycast_config
       install_vorssaint_config
+      install_iterm2_config
   }
 
   prepare_real_dir() {
@@ -381,15 +486,164 @@ link_dotfiles() {
 
 
 # ==============================================================================
+# 配置文件链接之后的环境初始化 (Post-link environment setup)
+# ==============================================================================
+
+# --- 日常 Python 环境：~/.global-env ---
+setup_python_env() {
+  echo -e "\n››› Setting up the shared Python environment (~/.global-env)..."
+
+  if ! command -v uv &> /dev/null; then
+    echo "  uv not found. Skipping."
+    return 1
+  fi
+
+  local env_dir="$HOME/.global-env"
+  if [ ! -f "$env_dir/bin/activate" ]; then
+    uv venv --python 3.13 "$env_dir" || return 1
+  else
+    echo "  $env_dir already exists."
+  fi
+
+  local requirements="$DOTFILES_DIR/python/global-requirements.txt"
+  if [ -f "$requirements" ]; then
+    uv pip install --python "$env_dir/bin/python" -r "$requirements" || return 1
+  fi
+
+  echo "  ✅ Python environment ready."
+}
+
+# --- tmux：TPM、插件，以及 tmux-thumbs 的本地编译 ---
+setup_tmux() {
+  echo -e "\n››› Setting up tmux plugins..."
+
+  if ! command -v tmux &> /dev/null; then
+    echo "  tmux not found. Skipping."
+    return 0
+  fi
+
+  local tpm_dir="$HOME/.tmux/plugins/tpm"
+  if [ ! -d "$tpm_dir" ]; then
+    mkdir -p "$HOME/.tmux/plugins"
+    git clone --depth 1 https://github.com/tmux-plugins/tpm "$tpm_dir" || return 1
+  fi
+
+  "$tpm_dir/bin/install_plugins" || return 1
+
+  # tmux-thumbs 在 Apple Silicon 上没有预编译二进制，需要用 rustup 编译
+  local thumbs_dir="$HOME/.tmux/plugins/tmux-thumbs"
+  if [ -d "$thumbs_dir" ] && [ ! -x "$thumbs_dir/target/release/thumbs" ]; then
+    if is_macos && command -v brew &> /dev/null && [ -d "$(brew --prefix rustup 2> /dev/null)/bin" ]; then
+      export PATH="$(brew --prefix rustup)/bin:$HOME/.cargo/bin:$PATH"
+    fi
+
+    if ! command -v rustup &> /dev/null && ! command -v cargo &> /dev/null; then
+      echo "  rustup/cargo not found. Skipping tmux-thumbs build."
+      return 1
+    fi
+
+    if command -v rustup &> /dev/null && ! rustup show active-toolchain &> /dev/null; then
+      rustup default stable || return 1
+    fi
+
+    echo "  Compiling tmux-thumbs (this takes a minute)..."
+    ( cd "$thumbs_dir" && cargo build --release --target-dir=target ) || return 1
+  fi
+
+  echo "  ✅ tmux plugins ready."
+}
+
+# --- Neovim：按 lazy-lock.json 还原插件，安装 treesitter 解析器和 LSP ---
+setup_neovim() {
+  echo -e "\n››› Setting up Neovim plugins, parsers and language servers..."
+
+  if ! command -v nvim &> /dev/null; then
+    echo "  nvim not found. Skipping."
+    return 0
+  fi
+
+  # 1. 按 lazy-lock.json 安装插件
+  nvim --headless "+Lazy! restore" +qa || return 1
+
+  # 2. treesitter 解析器（需要 tree-sitter-cli 和 C 编译器）
+  nvim --headless \
+    '+lua local p = require("lazy.core.config").plugins["nvim-treesitter"]; local o = require("lazy.core.plugin").values(p, "opts", false); require("nvim-treesitter").install(o.languages):wait(600000)' \
+    +qa || return 1
+
+  # 3. Mason：LSP（lsp.lua 里 vim.lsp.enable 的那几个）
+  nvim --headless \
+    '+lua local r = require("mason-registry"); local want = { "pyright", "marksman", "lua-language-server" }; local queued = false; r.refresh(function() for _, n in ipairs(want) do local ok, pkg = pcall(r.get_package, n); if ok and not pkg:is_installed() then pkg:install() end end; queued = true end); vim.wait(600000, function() if not queued then return false end; for _, n in ipairs(want) do local ok, pkg = pcall(r.get_package, n); if ok and pkg:is_installing() then return false end end; return true end, 500)' \
+    +qa || return 1
+
+  echo "  ✅ Neovim ready."
+}
+
+# --- macOS 系统偏好 ---
+apply_macos_defaults() {
+  echo -e "\n››› Applying macOS system preferences..."
+  "$DOTFILES_DIR/macos/system/defaults.sh"
+}
+
+# --- 无法脚本化的步骤：最后打印成清单 ---
+print_manual_steps() {
+  echo -e "\n››› Manual steps that cannot be automated:"
+  if is_macos; then
+    cat << 'EOF'
+  1. System Settings → Privacy & Security:
+       Accessibility:      Hammerspoon, Karabiner-Elements, Tinycast, Vorssaint
+       Input Monitoring:   Karabiner-Elements, Karabiner-EventViewer
+       Location Services:  Hammerspoon (only for the Wi-Fi automation)
+     Karabiner also asks you to allow its system/driver extension.
+  2. Log out and back in once so input sources and keyboard shortcuts apply.
+  3. Log in:
+       gh auth login
+       Tailscale (accounts used by the Hammerspoon module)
+  4. Restore secrets that are intentionally not in this repository:
+       ~/.ssh keys (a config template was copied only if none existed)
+       ~/.private (environment variables)
+       ~/.config/zsh/aliases.local, ~/.config/zsh/paths.local (if you use them)
+       ~/.hammerspoon/config.lua (Wi-Fi / Tailscale accounts; starts disabled)
+       Tinycast AI connection (use Tinycast's own Backup export)
+  5. Open a new iTerm2 window; pick up the font "JetBrainsMono Nerd Font" if prompted.
+EOF
+  else
+    echo "  Restart your shell, then run: gh auth login"
+  fi
+}
+
+
+# ==============================================================================
 # 主函数 (Main Function)
 # ==============================================================================
 
 main() {
   echo "🚀 Starting dotfiles setup..."
-  
+
+  if is_macos; then
+    start_sudo_keepalive
+    run_step "Xcode Command Line Tools" ensure_xcode_clt
+  fi
+
   # 推荐的执行顺序：先安装好工具和环境，再部署依赖这些工具的配置文件
-  install_packages
-  link_dotfiles
+  run_step "Package installation" install_packages
+  run_step "Dotfile linking" link_dotfiles
+
+  if is_macos; then
+    # 后续步骤依赖 brew 装好的 uv / tmux / nvim
+    load_homebrew_env || true
+    run_step "Python environment" setup_python_env
+    run_step "tmux plugins" setup_tmux
+    run_step "Neovim setup" setup_neovim
+    run_step "macOS system preferences" apply_macos_defaults
+  fi
+
+  print_manual_steps
+
+  if [ "${#FAILED_STEPS[@]}" -gt 0 ]; then
+    echo -e "\n⚠️  Finished, but these steps failed (see output above; the script is safe to re-run):"
+    printf '   - %s\n' "${FAILED_STEPS[@]}"
+    exit 1
+  fi
 
   echo -e "\n🎉 All tasks complete! Please restart your shell or reload your shell config."
 }

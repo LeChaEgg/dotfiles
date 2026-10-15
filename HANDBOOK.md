@@ -15,7 +15,8 @@
 - macOS 软件安装清单在根目录 `Brewfile`，避免把某台机器的全部 App 当成迁移依赖。
 - `config/` 下的内容会被整体链接到 `~/.config/`。
 - Karabiner Elements 由 `Brewfile` 安装，`config/karabiner` 会链接到 `~/.config/karabiner`。
-- Tinycast 和 Vorssaint 的安全偏好由 `macos/` 下的脚本恢复。
+- Tinycast、Vorssaint、iTerm2 的可迁移偏好由 `macos/` 下的脚本恢复。
+- macOS 系统偏好（触控板、Dock、Finder、键盘快捷键、输入法、电源等）由 `macos/system/defaults.sh` 恢复。
 - 所以你平时改 `~/.config/...`，本质上就是在改这个仓库里的文件。
 - `ssh/config.example` 不会被软链接，只会在本地缺失时复制成 `~/.ssh/config` 模板。
 
@@ -39,7 +40,7 @@
 | Neovim | 编辑器 | `config/nvim/` | 快捷键、插件、LSP |
 | gh | GitHub CLI | `config/gh/config.yml` | gh aliases |
 | Git | Git 用户级设置 | `gitconfig` | 用户名、邮箱、默认编辑器 |
-| Ghostty | 第三方终端 | `config/ghostty/config` | 字体、快速终端、标题栏 |
+| iTerm2 | 终端 | `macos/iterm2/preferences.plist` | 配色、字体、快捷键、profile |
 | Hammerspoon | macOS 自动化 | `config/hammerspoon/` | 输入法、Wi-Fi、Tailscale |
 | Karabiner | 键盘改键 | `config/karabiner/` | Hyper、语言切换、窗口管理 |
 | mactop | 系统监控 | `config/zsh/aliases` | `top` alias |
@@ -247,22 +248,19 @@ Neovim 配置集中在 `config/nvim/`。
    - Cloudflare tunnel 示例
    - Host 模板结构
 
-## 7. Ghostty / Karabiner / Hammerspoon / 系统监控
+## 7. iTerm2 / Karabiner / Hammerspoon / 系统监控
 
 这几项不是每天必改，但属于“改了以后效果很明显”的配置。
 
-### 7.1 Ghostty
+### 7.1 iTerm2
 
-`config/ghostty/config` 主要做了这些事：
+iTerm2 的偏好保存在 macOS 的 `defaults` 里，不是普通配置文件。仓库里只跟踪可迁移的部分：
 
-- 使用 `JetBrainsMono Nerd Font`
-- 字体大小 `15`
-- titlebar 风格为 `tabs`
-- `Option-t` 绑定全局 quick terminal
-- `Cmd-.` 发送 `Ctrl-C`
-- `Cmd-f` 导出 scrollback 文件并打开
+- `macos/iterm2/preferences.plist`：profile（字体、配色、透明度）、全局快捷键、鼠标手势、标签栏/分屏行为
+- `macos/iterm2/apply-settings.sh`：把上面的内容合并进 iTerm2 当前偏好；AI 设置、窗口位置、更新状态等机器本地项不会被覆盖
 
-如果你平时主要用系统 Terminal，这部分可以先忽略。
+安装脚本会在 iTerm2 未运行时自动执行它。如果在 iTerm2 里改了设置，想存回仓库，需要重新导出对应的键
+（做法见 `apply-settings.sh` 和 `preferences.plist` 里的键名）。
 
 ### 7.2 Karabiner
 
