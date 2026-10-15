@@ -12,8 +12,6 @@ export PATH="$PATH:$HOME/.local/bin"
 export W3M_DIR="$HOME/.cache/w3m"
 export PYTHONWARNINGS="ignore:The parameter -j is used more than once:UserWarning:click.core:"
 
-[ -d /opt/homebrew/opt/python@3.13/libexec/bin ] && export PATH="/opt/homebrew/opt/python@3.13/libexec/bin:$PATH"
-
 # Use one shared Python environment for small, ad-hoc scripts.
 # Keep an already-active project environment untouched.
 if [[ -z "${VIRTUAL_ENV:-}" && -f "$HOME/.global-env/bin/activate" ]]; then
@@ -56,5 +54,7 @@ if command -v brew >/dev/null 2>&1; then
 	export HOMEBREW_NO_AUTO_UPDATE=1
 fi
 
-[ -d /opt/homebrew/opt/node@22/bin ] && export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
 [ -d /Library/TeX/texbin ] && export PATH="/Library/TeX/texbin:$PATH"
+
+# Keep machine- or project-specific PATH additions out of the tracked config.
+[ -f "$HOME/.config/zsh/paths.local" ] && source "$HOME/.config/zsh/paths.local"

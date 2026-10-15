@@ -35,34 +35,30 @@ install_homebrew_packages() {
     return 1 # 返回错误，中止函数
   fi
 
-  # 定义需要安装的软件包列表
-  local brew_packages=(
-    ffmpeg
-    sevenzip
-    jq
-    poppler
-    fd
-    ripgrep
-    resvg
-    imagemagick
-    eza
-    nvim
-    starship
-    rich-cli
-    virtualenv
-    uv
-  )
+  if ! brew bundle --help &> /dev/null; then
+    echo "  Homebrew Bundle is unavailable. Skipping package installation."
+    return 1
+  fi
 
-  # 定义需要安装的字体/应用列表 (Casks)
-  local brew_casks=(
-    font-jetbrains-mono-nerd-font
-  )
+  local brewfile="$DOTFILES_DIR/Brewfile"
+  if [ ! -f "$brewfile" ]; then
+    echo "  Brewfile not found: $brewfile"
+    return 1
+  fi
 
-  echo "  Installing formulae: ${brew_packages[*]}"
-  brew install "${brew_packages[@]}"
+  if grep -Eq '^[[:space:]]*tap "abue-ammar/tinycast"' "$brewfile"; then
+    echo "  Trusting the Tinycast Homebrew tap..."
+    if ! brew trust --tap abue-ammar/tinycast; then
+      echo "  ❌ Could not trust the Tinycast Homebrew tap."
+      return 1
+    fi
+  fi
 
-  echo "  Installing casks: ${brew_casks[*]}"
-  brew install --cask "${brew_casks[@]}"
+  echo "  Installing packages from $brewfile"
+  if ! brew bundle install --file="$brewfile"; then
+    echo "  ❌ Homebrew package installation failed."
+    return 1
+  fi
 
   echo "  ✅ Homebrew packages installation complete."
 }
@@ -82,7 +78,6 @@ install_ubuntu_packages() {
     curl
     wget
     tmux
-    btop
     ffmpeg
     p7zip-full
     jq
@@ -194,6 +189,71 @@ link_dotfiles() {
       echo "    Linked $src_path -> $dest_path"
   }
 
+  prepare_hammerspoon_local_config() {
+      local config_path="$DOTFILES_DIR/config/hammerspoon/config.lua"
+      local example_path="$DOTFILES_DIR/config/hammerspoon/config.example.lua"
+
+      if [ -f "$config_path" ]; then
+          return
+      fi
+
+      if [ -f "$example_path" ]; then
+          cp "$example_path" "$config_path"
+          echo "    Created local Hammerspoon config: $config_path"
+          echo "    Edit it before enabling Wi-Fi or Tailscale automation."
+      fi
+  }
+
+  install_tinycast_config() {
+      local source_dir="$DOTFILES_DIR/macos/tinycast/Snippets"
+      local app_support="$HOME/Library/Application Support/com.tinycast.app"
+      local quicklinks_sql="$DOTFILES_DIR/macos/tinycast/quicklinks.sql"
+      local settings_script="$DOTFILES_DIR/macos/tinycast/apply-settings.sh"
+
+      if [ ! -d "$source_dir" ]; then
+          return
+      fi
+
+      if pgrep -x "Tinycast" &> /dev/null; then
+          echo "    Tinycast is running; skipped config sync. Re-run after quitting it."
+          return
+      fi
+
+      mkdir -p "$app_support"
+      link_path "$source_dir" "$app_support/Snippets"
+
+      if command -v sqlite3 &> /dev/null && [ -f "$quicklinks_sql" ]; then
+          sqlite3 "$app_support/quicklinks.sqlite3" < "$quicklinks_sql"
+          echo "    Synced Tinycast quicklinks."
+      fi
+
+      if [ -x "$settings_script" ]; then
+          "$settings_script"
+          echo "    Applied tracked Tinycast preferences."
+      fi
+  }
+
+  install_vorssaint_config() {
+      local settings_script="$DOTFILES_DIR/macos/vorssaint/apply-settings.sh"
+
+      if [ ! -x "$settings_script" ]; then
+          return
+      fi
+
+      if pgrep -x "Vorssaint" &> /dev/null; then
+          echo "    Vorssaint is running; skipped preference sync. Re-run after quitting it."
+          return
+      fi
+
+      "$settings_script"
+      echo "    Applied tracked Vorssaint preferences."
+  }
+
+  install_macos_app_configs() {
+      install_tinycast_config
+      install_vorssaint_config
+  }
+
   prepare_real_dir() {
       local dest_dir="$1"
 
@@ -208,7 +268,6 @@ link_dotfiles() {
       local item_name="$1"
 
       case "$item_name" in
-          btop) command -v btop &> /dev/null ;;
           gh) command -v gh &> /dev/null ;;
           nvim) command -v nvim &> /dev/null ;;
           starship.toml) command -v starship &> /dev/null ;;
@@ -261,6 +320,11 @@ link_dotfiles() {
       local dest_path="${dest/#\~/$HOME}"
       link_path "$src_path" "$dest_path"
   done
+
+  if is_macos; then
+      prepare_hammerspoon_local_config
+      install_macos_app_configs
+  fi
 
   # --- 2. 链接 .config 目录下的所有内容 ---
   local CONFIG_SRC_DIR="$DOTFILES_DIR/config"

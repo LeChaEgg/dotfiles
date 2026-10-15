@@ -4,9 +4,15 @@
 #local folders
 /config/karabiner/automatic_backups/
 /config/gh/hosts.yml
+/config/hammerspoon/config.lua
+/config/hammerspoon/Spoons/*
+!/config/hammerspoon/Spoons/.gitkeep
 /config/iterm2/AppSupport
 /config/iterm2/sockets/
 /config/zsh/aliases.local
+/config/zsh/paths.local
+/macos/tinycast/*.tinycast
+/macos/tinycast/private/
 
 # ssh: templates only
 /ssh/*

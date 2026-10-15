@@ -2,8 +2,21 @@
 [user]
 	name = LeChaEgg
 	email = xiehtsinghua@gmail.com
-# Please adapt and uncomment the following lines:
-#	name = LeChaEgg
-#	email = xiehtsinghua@gmail.com
 [core]
 	editor = nvim
+# Resolve helpers from PATH so this file also works on Apple Silicon and on a
+# machine with a different home directory.
+[credential "https://origin.cursor.com/git"]
+	helper =
+	helper = !origin credential-helper
+[credential "https://origin.cursor.com"]
+	helper =
+	helper = !origin credential-helper
+[credential "https://github.com"]
+	helper =
+	helper = !gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !gh auth git-credential
+[pull]
+	rebase = false

@@ -12,7 +12,10 @@
 这个仓库的核心原则很简单：repo 里的文件就是 source of truth。
 
 - `install.sh` 会把 `zshrc`、`zprofile`、`gitconfig`、`config/hammerspoon` 链接到 home 目录。
+- macOS 软件安装清单在根目录 `Brewfile`，避免把某台机器的全部 App 当成迁移依赖。
 - `config/` 下的内容会被整体链接到 `~/.config/`。
+- Karabiner Elements 由 `Brewfile` 安装，`config/karabiner` 会链接到 `~/.config/karabiner`。
+- Tinycast 和 Vorssaint 的安全偏好由 `macos/` 下的脚本恢复。
 - 所以你平时改 `~/.config/...`，本质上就是在改这个仓库里的文件。
 - `ssh/config.example` 不会被软链接，只会在本地缺失时复制成 `~/.ssh/config` 模板。
 
@@ -37,9 +40,9 @@
 | gh | GitHub CLI | `config/gh/config.yml` | gh aliases |
 | Git | Git 用户级设置 | `gitconfig` | 用户名、邮箱、默认编辑器 |
 | Ghostty | 第三方终端 | `config/ghostty/config` | 字体、快速终端、标题栏 |
-| Hammerspoon | macOS 自动化 | `config/hammerspoon/init.lua` | 输入法切换、前台应用自动化 |
+| Hammerspoon | macOS 自动化 | `config/hammerspoon/` | 输入法、Wi-Fi、Tailscale |
 | Karabiner | 键盘改键 | `config/karabiner/` | Hyper、语言切换、窗口管理 |
-| btop | 系统监控 | `config/btop/btop.conf` | 界面布局、颜色、采样行为 |
+| mactop | 系统监控 | `config/zsh/aliases` | `top` alias |
 | SSH | SSH 模板 | `ssh/config.example` | Host 模板、代理、认证方式 |
 
 ## 3. Shell：Zsh / Starship / Aliases
@@ -244,7 +247,7 @@ Neovim 配置集中在 `config/nvim/`。
    - Cloudflare tunnel 示例
    - Host 模板结构
 
-## 7. Ghostty / Karabiner / btop
+## 7. Ghostty / Karabiner / Hammerspoon / 系统监控
 
 这几项不是每天必改，但属于“改了以后效果很明显”的配置。
 
@@ -276,36 +279,55 @@ Neovim 配置集中在 `config/nvim/`。
 - `config/karabiner/karabiner.json`
 - `config/karabiner/assets/complex_modifications/`
 
-### 7.3 btop
+安装脚本会自动安装 Karabiner Elements 并同步当前 `karabiner.json`。首次运行时，
+Karabiner 仍需要在系统设置里重新授予输入监控/辅助功能权限；这些权限不属于配置文件。
 
-`config/btop/btop.conf` 主要是界面与显示偏好：
+### 7.3 Hammerspoon
 
-- 开启 truecolor
-- 圆角面板
-- 图表符号偏好为 `braille`
-- 电池显示开启
-- 网络自动缩放开启
+Hammerspoon 入口是 `config/hammerspoon/init.lua`，功能拆在：
 
-这个配置偏“开箱即用”，一般不需要高频修改。
+- `modules/input_source.lua`：按 App 记忆和切换输入法，需要 `macism`
+- `modules/wifi.lua`：指定 SSID 使用静态网络配置，其他 Wi-Fi 使用 DHCP
+- `modules/tailscale.lua`：按时间切换两个 Tailscale 账号
+
+设备和账号相关配置只放在 `config/hammerspoon/config.lua`。它已被 Git 忽略，
+模板是 `config/hammerspoon/config.example.lua`。新机器上先复制并编辑模板，
+再打开 Hammerspoon。
+
+额外要求：
+
+- Hammerspoon 需要辅助功能/自动化权限；Wi-Fi SSID 读取可能需要定位服务权限
+- Wi-Fi 静态配置默认通过 `sudo -n networksetup` 执行，需要配置免密码 sudo 规则
+- Tailscale 两个账号必须已经在 CLI 中登录；当前只按 Apple Silicon Homebrew 路径查找
+- Hammerspoon 重载后，输入法记忆和 Tailscale 日期状态保存在 Hammerspoon settings 中，
+  不属于仓库配置
+
+### 7.4 系统监控
+
+安装 `mactop` 后，`top` 命令会映射到它。
 
 ## 8. 依赖与常见坑
 
-`install.sh` 会安装一批常用工具，但不是所有配置依赖都自动安装了。
+macOS 的 `install.sh` 会安装配置直接依赖的常用工具，包括 `bat`、`gh`、
+`lazygit`、`macism`、`tmux`、`mactop` 和 `uv`，以及 Hammerspoon、Karabiner Elements、
+Tinycast、Vorssaint。
 
-你现在这套配置中，下面这些命令被引用了，但不一定会被自动装上：
+下面这些仍然是按需安装或需要登录/初始化的外部状态：
 
-- `tmux`
-- `gh`
-- `bat`
-- `lazygit`
-- `screen`
-- `docker` / `docker compose`
+- `tailscale`
+- `docker` / `docker compose` / OrbStack
 - `mpv`
 - `mediainfo`
 - `exiftool`
 - `cloudflared`
 
-如果你发现 alias 存在但命令不可用，先检查是不是工具本体没安装。
+Tinycast 的仓库配置位于 `macos/tinycast/`；其中 `Snippets/` 是软链接到应用数据目录，
+因此日常新增 snippet 会直接回到 repo。完整 Tinycast Backup 可能包含剪贴板、截图或登录信息，
+请放在仓库外保存。
+
+Vorssaint 的配置脚本只恢复可迁移偏好；显示器 IO 路径、窗口尺寸、更新状态和 token 不恢复。
+
+如果 alias 存在但命令不可用，先检查工具本体和当前机器架构是否正确。
 
 ## 9. 忘了时的最短路径
 
@@ -317,7 +339,26 @@ Neovim 配置集中在 `config/nvim/`。
 4. 键盘改键：看 `config/karabiner/karabiner.json`
 5. 不确定入口文件：回来看本手册第 2 节的软件总览
 
-## 10. 建议的后续维护方式
+## 10. 新 Mac 迁移清单
+
+推荐顺序：
+
+1. 在旧 Mac 上提交并推送 dotfiles 的最新改动，并做一次最新 Time Machine 备份。
+2. 新 Mac 完成公司 MDM/账户设置后，用迁移助理导入个人账户和文件。
+3. 克隆仓库并运行 `bash install.sh`，安装工具并建立软链接。
+4. 检查 Tinycast 的 snippets/quicklinks，以及 Vorssaint 的偏好是否已恢复。
+5. 从 `config/hammerspoon/config.example.lua` 创建本地配置，填入本机网络和账号信息。
+6. 登录 Tailscale、GitHub CLI、Docker/OrbStack；授予 Hammerspoon、Karabiner 所需权限。
+7. 检查 Homebrew、`macism`、Node/Python、Neovim、tmux 和 SSH，再删除或降权临时管理员。
+
+不要把下面这些当作可直接提交的配置：
+
+- `config/hammerspoon/config.lua`
+- `~/.private`、SSH 私钥、`~/.ssh/known_hosts`
+- Tailscale/GitHub/Docker 登录状态
+- Homebrew 安装目录中的二进制文件
+
+## 11. 建议的后续维护方式
 
 为了避免以后又忘，建议继续按下面的方式维护：
 

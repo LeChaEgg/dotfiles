@@ -31,7 +31,7 @@
                                     }
                                 },
                                 "to": [
-                                    { "shell_command": "/opt/homebrew/bin/macism com.apple.inputmethod.SCIM.ITABC" },
+                                    { "shell_command": "PATH=\"/opt/homebrew/bin:$PATH\" macism com.apple.inputmethod.SCIM.ITABC" },
                                     { "key_code": "vk_none" }
                                 ],
                                 "type": "basic"

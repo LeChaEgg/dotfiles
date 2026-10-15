@@ -9,6 +9,9 @@ alias lh='ls -alht'
 alias mv='mv -i' # confirm override when moving
 alias cp='cp -i' # confirm override when copying
 
+# System monitor
+alias top='mactop'
+
 # vim
 alias v='nvim'
 alias vo='nvim -O'
@@ -43,7 +46,6 @@ alias gpull='git pull'
 alias gpush='git push'
 alias glogg='git logg'
 alias gbr='git branch'
-alias sc="~/dotfiles/scripts/source_control.sh"
 alias lg='lazygit'
 alias lp='lazygit -p'
 
