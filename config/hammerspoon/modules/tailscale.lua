@@ -6,9 +6,12 @@ local function isFile(path)
 end
 
 local function resolveBinary(config)
+	if isFile(config.binary) then
+		return config.binary
+	end
 	local candidates = {
-		config.binary,
 		"/opt/homebrew/bin/tailscale",
+		"/usr/local/bin/tailscale",
 		"/Applications/Tailscale.app/Contents/MacOS/Tailscale",
 	}
 	for _, candidate in ipairs(candidates) do
@@ -41,8 +44,8 @@ function M.start(config)
 	local state = _G.dotfilesTailscaleState or {}
 	_G.dotfilesTailscaleState = state
 	state.lastSwitchDates = state.lastSwitchDates or {
-		work = hs.settings.get("dotfiles.tailscale.lastWorkSwitchDate"),
-		personal = hs.settings.get("dotfiles.tailscale.lastPersonalSwitchDate"),
+		work = hs.settings.get("dotfiles.tailscale.verifiedWorkSwitchDate"),
+		personal = hs.settings.get("dotfiles.tailscale.verifiedPersonalSwitchDate"),
 	}
 
 	if state.timer then
@@ -61,11 +64,11 @@ function M.start(config)
 		if now.hour >= personalHour then
 			targetAccount = config.personal_account
 			switchKey = "personal"
-			settingKey = "dotfiles.tailscale.lastPersonalSwitchDate"
+			settingKey = "dotfiles.tailscale.verifiedPersonalSwitchDate"
 		elseif now.hour >= workHour then
 			targetAccount = config.work_account
 			switchKey = "work"
-			settingKey = "dotfiles.tailscale.lastWorkSwitchDate"
+			settingKey = "dotfiles.tailscale.verifiedWorkSwitchDate"
 		else
 			return
 		end
@@ -75,37 +78,55 @@ function M.start(config)
 			return
 		end
 
-		local task
-		task = hs.task.new(binary, function(exitCode, stdout, stderr)
-			if state.task ~= task then
+		local function fail(message)
+			log.e(message)
+			hs.alert.show("Tailscale account switch failed")
+		end
+
+		local function runTask(args, callback)
+			local task
+			task = hs.task.new(binary, function(exitCode, stdout, stderr)
+				if state.task ~= task then
+					return
+				end
+				state.task = nil
+				callback(exitCode, stdout or "", stderr or "")
+			end, args)
+			if not task then
+				fail("Failed to create Tailscale task")
 				return
 			end
-			state.task = nil
-			if exitCode == 0 then
-				state.lastSwitchDates[switchKey] = dateKey
-				hs.settings.set(settingKey, dateKey)
-				log.i(string.format("Switched to %s", targetAccount))
-			else
-				log.e(string.format(
-					"Switch to %s failed (exit=%d, stdout=%s, stderr=%s)",
-					targetAccount,
-					exitCode,
-					stdout or "",
-					stderr or ""
-				))
-				hs.alert.show("Tailscale account switch failed")
+			state.task = task
+			if not task:start() then
+				state.task = nil
+				fail("Failed to start Tailscale task")
 			end
-		end, { "switch", targetAccount })
+		end
 
-		if not task then
-			log.e("Failed to create Tailscale switch task")
-			return
-		end
-		state.task = task
-		if not task:start() then
-			state.task = nil
-			log.e("Failed to start Tailscale switch task")
-		end
+		runTask({ "switch", targetAccount }, function(exitCode, stdout, stderr)
+			if exitCode ~= 0 then
+				fail(string.format("Switch to %s failed (exit=%d, stdout=%s, stderr=%s)",
+					targetAccount, exitCode, stdout, stderr))
+				return
+			end
+			runTask({ "switch", "--list", "--json" }, function(listExit, listOutput, listError)
+				local ok, profiles = pcall(hs.json.decode, listOutput)
+				if listExit ~= 0 or not ok or type(profiles) ~= "table" then
+					fail(string.format("Could not verify Tailscale account (exit=%d, stderr=%s)", listExit, listError))
+					return
+				end
+				for _, profile in ipairs(profiles) do
+					if profile.selected and (profile.id == targetAccount or profile.account == targetAccount
+						or profile.nickname == targetAccount or profile.tailnet == targetAccount) then
+						state.lastSwitchDates[switchKey] = dateKey
+						hs.settings.set(settingKey, dateKey)
+						log.i(string.format("Switched to and verified %s", targetAccount))
+						return
+					end
+				end
+				fail(string.format("Tailscale did not select %s", targetAccount))
+			end)
+		end)
 	end
 
 	state.timer = hs.timer.doEvery(60, maybeSwitch)

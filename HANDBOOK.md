@@ -296,7 +296,8 @@ Hammerspoon 入口是 `config/hammerspoon/init.lua`，功能拆在：
 
 - Hammerspoon 需要辅助功能/自动化权限；Wi-Fi SSID 读取可能需要定位服务权限
 - Wi-Fi 静态配置默认通过 `sudo -n networksetup` 执行，需要配置免密码 sudo 规则
-- Tailscale 两个账号必须已经在 CLI 中登录；当前只按 Apple Silicon Homebrew 路径查找
+- Tailscale 两个账号必须已经在 CLI 中登录；自动查找 Homebrew 和 Tailscale 应用中的 CLI，切换后会核验当前账号，失败时下次检查重试
+- 默认每天 9:00 和 20:00 之后分别切换一次（时间可配置）；之后手动切换的账号会保留到下一次定时切换
 - Hammerspoon 重载后，输入法记忆和 Tailscale 日期状态保存在 Hammerspoon settings 中，
   不属于仓库配置
 
